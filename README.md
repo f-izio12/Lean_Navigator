@@ -1,5 +1,3 @@
-# Lean_Navigator
-This is a tool for Lean Management
 # Lean Navigator
 
 A local-first workspace for Lean and Six Sigma improvement projects. It runs in your browser, can be installed as an app, and keeps your data encrypted on your own device.
