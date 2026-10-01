@@ -1,5 +1,5 @@
 /* ================= App shell: vault screens, settings, storage, start-up ================= */
-const APP_VERSION="1.2.0";
+const APP_VERSION="1.2.1";
 let saveChain=Promise.resolve();
 function persistAll(){saveChain=saveChain.then(async()=>{Vault.state.projects=S.projects;await Vault.seal();if(Vault.fileHandle&&Vault.fileStatus.startsWith("File saved"))Vault.dirty=false;updateBanner();updateSaveBar()});return saveChain}
 const _scheduleSave=scheduleSave;scheduleSave=function(p){Vault.dirty=true;_scheduleSave(p);updateSaveBar()};
@@ -46,7 +46,7 @@ function showCode(code,first){
 function showOnboarding(){
   screen(`<h2>Two optional steps</h2>
    <h3 class="gh">1. Keep a copy of your vault in a file</h3>
-   ${Vault.fileSupported()?`<p class="small">Choose a file on your computer or in a synced folder (SURFdrive, OneDrive, Dropbox). The app updates it after every change and reads the newest copy when it starts. You can also do this later in Settings.</p><button class="btn alt" id="link">Choose a file</button> <span class="small muted" id="linkState"></span>`
+   ${Vault.fileSupported()?`<p class="small">Choose a file on your computer or in a synced folder (OneDrive, Google Drive, Dropbox). The app updates it after every change and reads the newest copy when it starts. You can also do this later in Settings.</p><button class="btn alt" id="link">Choose a file</button> <span class="small muted" id="linkState"></span>`
      :`<p class="small">This browser cannot keep a file in sync. Use <b>Download backup</b> in Settings regularly; the app reminds you after 7 days. Chrome or Edge on a computer can sync to a file automatically.</p>`}
    <h3 class="gh">2. Connect an AI provider</h3>
    <p class="small">Needed only for the advisor chat and the black belt review. Everything else works without it. You can do this in Settings at any time.</p>
@@ -141,7 +141,7 @@ function showSaveModal(){
   $("#modalRoot").innerHTML=`<div class="overlay" id="ov"><div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="smh">
     <div class="panel-head"><h2 id="smh">Save your work before closing</h2></div>
     <div class="panel-body"><p style="margin-top:0">Your latest changes are stored in this browser only. Browsers can delete this data, for example when history is cleared. Save a copy to a file to be safe.</p>
-    <p class="small muted">${Vault.fileSupported()?"You choose where the file goes: your laptop, SURFdrive, OneDrive. After that it updates itself.":"The file goes to your Downloads folder."} Next time, if the browser kept your data you will see your projects as usual; if not, use <b>Open a saved file</b>.</p>
+    <p class="small muted">${Vault.fileSupported()?"You choose where the file goes: your laptop, OneDrive, Google Drive, Dropbox. After that it updates itself.":"The file goes to your Downloads folder."} Next time, if the browser kept your data you will see your projects as usual; if not, use <b>Open a saved file</b>.</p>
     <div class="row"><button class="btn hot" id="smSave">Save to file</button><button class="btn alt" id="smLeave">Close without saving</button><button class="btn alt" id="smCancel">Keep working</button></div></div></div></div>`;
   const close=()=>{$("#modalRoot").innerHTML=""};
   $("#smSave").onclick=async()=>{await saveToFile();if(!Vault.dirty){close();toast("Saved. You can close the browser now.")}};

@@ -17,7 +17,7 @@ Every stage has a checkpoint (tollgate, mentor check or review), instant quality
 Above the projects sit two portfolio pages:
 
 - **Pipeline**: collect improvement ideas, score them on benefit and effort, link them to a strategic priority, and decide: start as a project (with a method, or ask the advisor), move to the **Just do it** log, park or reject.
-- **Strategy (Hoshin Kanri)**: plans for the university, a faculty or service, and a team. Breakthrough objectives, annual objectives, improvement priorities and metrics are linked level by level, shown as matrices, and tracked month by month against a straight-line plan. Projects and ideas link to priorities, so you see which priorities have no work behind them.
+- **Strategy (Hoshin Kanri)**: plans at the levels you define, for example organisation, division and team. Breakthrough objectives, annual objectives, improvement priorities and metrics are linked level by level, shown as matrices, and tracked month by month against a straight-line plan. Projects and ideas link to priorities, so you see which priorities have no work behind them.
 
 **Catchball between levels** works with share files: the owner of a plan exports a share file, the level below imports it as its parent plan (read-only) and links its own objectives to it. Share files are not encrypted, because they are meant to be shared.
 
@@ -31,7 +31,7 @@ There is no server and no account. Projects and settings, including any AI key, 
 
 1. Open the app (your GitHub Pages address, see below).
 2. Choose a passphrase. The app shows a **recovery code** once: store it in a password manager or print it. If you forget your passphrase, the recovery code is the only way back in. There is no password reset by email, because there is no server.
-3. Optionally choose a **file to keep in sync** (Chrome and Edge on a computer). Pick a location on your laptop or in a synced folder such as SURFdrive, OneDrive or Dropbox. The app writes to it after every change and reads the newest copy when it starts, so you can use it on more than one computer.
+3. Optionally choose a **file to keep in sync** (Chrome and Edge on a computer). Pick a location on your laptop or in a synced folder such as OneDrive, Google Drive or Dropbox. The app writes to it after every change and reads the newest copy when it starts, so you can use it on more than one computer.
 4. Optionally connect an **AI provider** in Settings.
 
 ### Install it as an app
@@ -80,13 +80,13 @@ No programming needed.
 
 1. Create a free account at [github.com](https://github.com) if you do not have one.
 2. Click **+** (top right), then **New repository**. Name it `lean-navigator`, set it to **Public**, and click **Create repository**.
-3. On the new repository page, click **uploading an existing file**. Drag in **all files and folders** from this project (`index.html`, `sw.js`, `manifest.webmanifest`, `css`, `js`, `vendor`, `icons`, `README.md`, `LICENSE`). Click **Commit changes**.
+3. On the new repository page, click **uploading an existing file**. Drag in **all files and folders** from this project (`index.html`, `sw.js`, `manifest.webmanifest`, `css`, `js`, `vendor`, `fonts`, `icons`, `README.md`, `LICENSE`). Click **Commit changes**.
 4. Go to **Settings**, then **Pages** (left menu). Under "Build and deployment", set Source to **Deploy from a branch**, Branch to **main** and folder to **/ (root)**. Click **Save**.
 5. Wait one or two minutes and refresh the page. GitHub shows the address, usually `https://YOUR-NAME.github.io/lean-navigator/`. Open it and install it as described above.
 
 ### Publishing an update
 
-Upload the changed files in the same way. Then open `sw.js`, change `VERSION` (for example to `lean-navigator-1.0.1`) and commit. Users get the new version the next time they open the app while online.
+Upload the changed files in the same way. Then open `sw.js`, change `VERSION` (for example to `lean-navigator-1.2.2`) and commit. Also update `APP_VERSION` at the top of `js/app.js`, which is the number shown in Settings. Users get the new version the next time they open the app while online.
 
 ### Running it on your own computer
 
@@ -102,7 +102,8 @@ and open `http://localhost:8000`.
 
 ```
 index.html              page shell
-css/app.css             styles (default theme: dark blue #001C3D, orange-red #E84E10, light blue #00A2DB)
+css/app.css             styles (palette: blue #0C2145, gold #C3B598, cream #FFFCF0; typeface Jost)
+fonts/                  Jost typeface (woff2) and its licence
 js/core.js              registry, helpers, statistics
 js/charts.js            SVG charts shared by screen and PDF
 js/ui.js                library, advisor, project workspace, checkpoints, review
@@ -122,6 +123,10 @@ sw.js, manifest.webmanifest, icons/   installable app
 
 To add a method, create a file like `js/kaizen.js`: register the tool with its stages, tabs, checklists and blank data, then add its PDF sections in `js/pdf.js`.
 
+## Design and accessibility
+
+The palette is blue #0C2145, gold #C3B598 and cream #FFFCF0, with the Jost typeface. Gold does not have enough contrast for text on a light background, so it is used on blue and for decoration; a darker gold (#7A6A3E) is used for links and accents on light backgrounds, and a rust red (#A3422A) for warnings. The app follows a light or dark appearance according to the system setting.
+
 ## Limits
 
 - Statistics cover the common tests. Non-parametric and exact tests are not included.
@@ -130,4 +135,6 @@ To add a method, create a file like `js/kaizen.js`: register the tool with its s
 
 ## Licence and disclaimer
 
-MIT licence, see `LICENSE`. This is an independent project. It is not affiliated with, endorsed by or supported by Maastricht University. The default colour theme follows a common academic house style; the font falls back to Verdana, and no third-party fonts or logos are included.
+MIT licence, see `LICENSE`.
+
+Third-party components: jsPDF, jsPDF-AutoTable and ExcelJS (MIT licence), and the Jost typeface by The Jost Project Authors (SIL Open Font License 1.1, see `fonts/OFL.txt`). The font is included in the repository, so no requests are made to external font services.

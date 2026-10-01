@@ -6,7 +6,7 @@ const IDEA_ST=["New","Under review","Started","Just do it","Parked","Rejected"];
 /* every Hoshin priority the user can link to: own plans and imported parent plans */
 function allPriorities(){const out=[];[...PF().plans.map(p=>({p,own:true})),...PF().parents.map(p=>({p,own:false}))].forEach(({p,own})=>(p.priorities||[]).forEach((x,i)=>{if(x.text&&x.text.trim())out.push({id:x.id,code:"P"+(i+1),text:x.text,plan:p.name||"Untitled plan",level:p.level,own})}));return out}
 const priLabel=id=>{const x=allPriorities().find(q=>q.id===id);return x?`${x.plan}: ${x.code} ${trunc(x.text,50)}`:""};
-const priSelect=(cur,attr)=>`<select ${attr}><option value="">No strategic link</option>${allPriorities().map(x=>`<option value="${x.id}" ${x.id===cur?"selected":""}>${esc(trunc(`${x.plan} (${x.level}): ${x.code} ${x.text}`,90))}</option>`).join("")}</select>`;
+const priSelect=(cur,attr)=>`<select ${attr}><option value="">No strategic link</option>${allPriorities().map(x=>`<option value="${x.id}" ${x.id===cur?"selected":""}>${esc(trunc(`${x.plan}${x.level?" ("+x.level+")":""}: ${x.code} ${x.text}`,90))}</option>`).join("")}</select>`;
 
 /* ----- binding helper for objects outside a project ----- */
 function bindRoot(el,root,after){

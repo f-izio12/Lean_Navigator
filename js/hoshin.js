@@ -1,9 +1,8 @@
 /* ================= Hoshin Kanri: strategy deployment across levels ================= */
-const LEVELS=["University","Faculty or service","Team"];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const HKIND=[["breakthrough","B","Breakthrough objectives","3 to 5 years. Where the organisation must be."],["annual","A","Annual objectives","This year's steps towards the breakthrough objectives."],["priorities","P","Improvement priorities","The few initiatives that deliver the annual objectives. Projects link here."],["metrics","M","Metrics and targets","How progress on the priorities is measured each month."]];
 const linkTarget={annual:"breakthrough",priorities:"annual",metrics:"priorities"};
-function newPlan(){return{id:uidGen(),name:"",level:"Faculty or service",period:String(new Date().getFullYear()+1),owner:"",parent:"",breakthrough:[],annual:[],priorities:[],metrics:[],updated:new Date().toISOString()}}
+function newPlan(){return{id:uidGen(),name:"",level:"",period:String(new Date().getFullYear()+1),owner:"",parent:"",breakthrough:[],annual:[],priorities:[],metrics:[],updated:new Date().toISOString()}}
 const hcode=(plan,kind,id)=>{const k=HKIND.find(x=>x[0]===kind)[1],i=(plan[kind]||[]).findIndex(x=>x.id===id);return i<0?"":k+(i+1)};
 const findPlan=id=>PF().plans.find(p=>p.id===id)||PF().parents.find(p=>p.id===id);
 function parseCodes(plan,kind,text){const pre=HKIND.find(x=>x[0]===kind)[1],ids=[],bad=[];String(text||"").toUpperCase().split(/[,;\s]+/).filter(Boolean).forEach(c=>{const m=new RegExp("^"+pre+"(\\d+)$").exec(c);const it=m&&plan[kind][+m[1]-1];if(it)ids.includes(it.id)||ids.push(it.id);else bad.push(c)});return{ids,bad}}
@@ -28,14 +27,14 @@ function renderStrategy(){
     $("#app").innerHTML=`<div class="proj-head"><h2>Strategy (Hoshin Kanri)</h2><span class="muted small">Plans per level. A plan can take a plan from the level above as its parent: its annual objectives and priorities become the starting point below.</span>
      <div style="margin-left:auto" class="row"><button class="btn" id="newPlan">New plan</button><label class="btn alt" for="impPlan">Import a plan from a share file</label><input id="impPlan" type="file" accept=".json,application/json" hidden></div></div>
      ${infoBlock("hk.list")}
-     <div class="plans">${pf.plans.map(p=>`<button class="card plan-card" data-plan="${p.id}"><span class="lvl">${esc(p.level)}</span><b>${esc(p.name||"Untitled plan")}</b><span class="small muted">${esc(p.period)}${p.owner?", owner "+esc(p.owner):""}${p.parent?", under "+esc(findPlan(p.parent)?.name||"?"):""}</span><span class="small">${p.priorities.filter(x=>x.text.trim()).length} priorities, ${planGaps(p).length} gaps</span></button>`).join("")||`<p class="muted">No plans yet.</p>`}</div>
-     ${pf.parents.length?`<h4>Imported plans from other levels (read-only)</h4><ul class="small">${pf.parents.map(p=>`<li><b>${esc(p.name)}</b> (${esc(p.level)}, ${esc(p.period)}), received ${fmtDate(p.importedAt)} <button class="x" data-rmimp="${p.id}" aria-label="Remove">×</button></li>`).join("")}</ul>`:""}`;
+     <div class="plans">${pf.plans.map(p=>`<button class="card plan-card" data-plan="${p.id}"><span class="lvl">${esc(lvlTxt(p))}</span><b>${esc(p.name||"Untitled plan")}</b><span class="small muted">${esc(p.period)}${p.owner?", owner "+esc(p.owner):""}${p.parent?", under "+esc(findPlan(p.parent)?.name||"?"):""}</span><span class="small">${p.priorities.filter(x=>x.text.trim()).length} priorities, ${planGaps(p).length} gaps</span></button>`).join("")||`<p class="muted">No plans yet.</p>`}</div>
+     ${pf.parents.length?`<h4>Imported plans from other levels (read-only)</h4><ul class="small">${pf.parents.map(p=>`<li><b>${esc(p.name)}</b> (${esc(lvlTxt(p))}, ${esc(p.period)}), received ${fmtDate(p.importedAt)} <button class="x" data-rmimp="${p.id}" aria-label="Remove">×</button></li>`).join("")}</ul>`:""}`;
     $("#newPlan").onclick=()=>{const p=newPlan();pf.plans.push(p);S.planId=p.id;S.planTab="plan";savePF();renderStrategy()};
     document.querySelectorAll("[data-plan]").forEach(b=>b.onclick=()=>{S.planId=b.dataset.plan;S.planTab="plan";renderStrategy()});
     document.querySelectorAll("[data-rmimp]").forEach(b=>b.onclick=()=>{if(!confirm("Remove this imported plan? Links to it stop working."))return;pf.parents=pf.parents.filter(p=>p.id!==b.dataset.rmimp);savePF();renderStrategy()});
     $("#impPlan").onchange=e=>importShare(e.target.files[0]);bind($("#app"));return}
   const tab=S.planTab||"plan";
-  $("#app").innerHTML=`<div class="proj-head"><button class="btn alt" id="toList">All plans</button><input class="title-input" id="pname" value="${esc(plan.name)}" placeholder="Plan name, e.g. Library plan 2027" aria-label="Plan name">
+  $("#app").innerHTML=`<div class="proj-head"><button class="btn alt" id="toList">All plans</button><input class="title-input" id="pname" value="${esc(plan.name)}" placeholder="Plan name, e.g. Operations plan 2027" aria-label="Plan name">
     <div class="menu"><button class="btn" id="hkExp">Export ▾</button><div class="menu-list" id="hkList" hidden>
       <button data-hx="pdf"><b>PDF</b><span>The plan, the linked matrices and the monthly tracking.</span></button>
       <button data-hx="xlsx"><b>Excel workbook</b><span>Objectives, matrices and a coloured monthly tracking chart. One-way.</span></button>
@@ -51,15 +50,17 @@ function renderStrategy(){
   document.querySelectorAll("[data-ht]").forEach(x=>x.onclick=()=>{S.planTab=x.dataset.ht;renderStrategy()});
   const el=$("#hkSheet");({plan:hkPlanTab,obj:hkObjTab,matrix:hkMatrixTab,bowl:hkBowlTab,work:hkWorkTab})[tab](el,plan);
 }
+function descendantsOf(id){const out=new Set([id]);let grew=true;while(grew){grew=false;PF().plans.forEach(p=>{if(p.parent&&out.has(p.parent)&&!out.has(p.id)){out.add(p.id);grew=true}})}return out}
+const lvlTxt=p=>p.level&&p.level.trim()?p.level:"no level";
 function hkPlanTab(el,plan){
-  const pf=PF(),parents=[...pf.plans.filter(p=>p.id!==plan.id&&LEVELS.indexOf(p.level)<LEVELS.indexOf(plan.level)),...pf.parents.filter(p=>LEVELS.indexOf(p.level)<LEVELS.indexOf(plan.level))];
-  el.innerHTML=infoBlock("hk.plan")+`<div class="grid3"><div class="field"><label for="hl">Level</label><select id="hl" data-o="level">${LEVELS.map(v=>`<option ${v===plan.level?"selected":""}>${v}</option>`).join("")}</select></div>
+  const pf=PF(),below=descendantsOf(plan.id),parents=[...pf.plans.filter(p=>!below.has(p.id)),...pf.parents.filter(p=>!below.has(p.id))];
+  el.innerHTML=infoBlock("hk.plan")+`<div class="grid3"><div class="field"><label for="hl">Level</label><div class="hint">Your own name for the level, for example organisation, division, department or team.</div><input id="hl" data-o="level" value="${esc(plan.level||"")}"></div>
    <div class="field"><label for="hp">Period</label><div class="hint">The year this plan covers.</div><input id="hp" data-o="period" value="${esc(plan.period)}"></div>
-   <div class="field"><label for="ho">Owner</label><input id="ho" data-o="owner" value="${esc(plan.owner)}"></div></div>
-   <div class="field"><label for="hpar">Plan of the level above</label><div class="hint">Its annual objectives and priorities become the starting point for this plan. Import it from a share file if someone else owns it.</div>
-   <select id="hpar" data-o="parent"><option value="">None (top level)</option>${parents.map(p=>`<option value="${p.id}" ${p.id===plan.parent?"selected":""}>${esc(p.name||"Untitled")} (${esc(p.level)}, ${esc(p.period)})${pf.parents.includes(p)?" [imported]":""}</option>`).join("")}</select></div>
+   <div class="field"><label for="ho">Owner</label><div class="hint">&nbsp;</div><input id="ho" data-o="owner" value="${esc(plan.owner)}"></div></div>
+   <div class="field"><label for="hpar">Plan of the level above</label><div class="hint">Its annual objectives and priorities become the starting point for this plan. Import it from a share file if someone else owns it. Plans below this one are not offered, to avoid loops.</div>
+   <select id="hpar" data-o="parent"><option value="">None (top level)</option>${parents.map(p=>`<option value="${p.id}" ${p.id===plan.parent?"selected":""}>${esc(p.name||"Untitled")} (${esc(lvlTxt(p))}, ${esc(p.period)})${pf.parents.includes(p)?" [imported]":""}</option>`).join("")}</select></div>
    <div class="flags" id="hkGaps">${flagsHTML(planGaps(plan).length?planGaps(plan):plan.priorities.length?["✓ The plan is connected from breakthrough objectives down to metrics."]:[])}</div>`;
-  bindRoot(el,plan,i=>{plan.updated=new Date().toISOString();if(i.id==="hl")hkPlanTab(el,plan)});bind(el);
+  bindRoot(el,plan,()=>{plan.updated=new Date().toISOString()});bind(el);
 }
 function hkObjTab(el,plan){
   const par=plan.parent&&findPlan(plan.parent),tree=(kind,lbl,hint)=>{
@@ -71,7 +72,7 @@ function hkObjTab(el,plan){
        <td>${tgt?`<input data-links="${kind}" value="${esc((x.links||[]).map(id=>hcode(plan,tgt,id)).filter(Boolean).join(", "))}" placeholder="e.g. ${HKIND.find(y=>y[0]===tgt)[1]}1">`:par?`<input data-sup value="${esc((x.supports||[]).map(id=>hcode(par,"annual",id)||hcode(par,"priorities",id)).filter(Boolean).join(", "))}" placeholder="e.g. P1">`:""}</td>
        <td><button class="x" data-hdel="${kind}|${i}" aria-label="Remove">×</button></td></tr>`).join("")}
      </tbody></table></div><button class="btn alt addrow" data-hadd="${kind}">Add</button>`};
-  el.innerHTML=infoBlock("hk.obj")+(par?`<div class="parentbox"><b>From the level above: ${esc(par.name||"Untitled")} (${esc(par.level)}, ${esc(par.period)})</b>
+  el.innerHTML=infoBlock("hk.obj")+(par?`<div class="parentbox"><b>From the level above: ${esc(par.name||"Untitled")} (${esc(lvlTxt(par))}, ${esc(par.period)})</b>
      <div class="grid2"><div><p class="small muted">Annual objectives</p><ul>${par.annual.filter(a=>a.text).map(a=>`<li><b>${hcode(par,"annual",a.id)}</b> ${esc(a.text)}</li>`).join("")||"<li class='muted'>None</li>"}</ul></div>
      <div><p class="small muted">Improvement priorities</p><ul>${par.priorities.filter(a=>a.text).map(a=>`<li><b>${hcode(par,"priorities",a.id)}</b> ${esc(a.text)}</li>`).join("")||"<li class='muted'>None</li>"}</ul></div></div></div>`:"")+
    HKIND.map(([k,,l,h])=>tree(k,l,h)).join("")+`<div class="flags" id="hkF"></div>`;
@@ -119,8 +120,8 @@ async function importShare(f){if(!f)return;try{const d=JSON.parse(await f.text()
   add(d.parent);add(d.plan);savePF();renderStrategy();toast(`Imported "${d.plan.name}". Choose it as the parent of your plan on the Plan tab.`)}catch(e){toast(e.message||"Could not read the file.")}}
 async function exportPlanXlsx(plan){
   const wb=new ExcelJS.Workbook();wb.creator="Lean Navigator";const ws=wb.addWorksheet("Plan");ws.getColumn(1).width=8;ws.getColumn(2).width=70;ws.getColumn(3).width=20;ws.getColumn(4).width=20;
-  const t=ws.addRow([plan.name||"Hoshin plan"]);t.font={bold:true,size:16,color:{argb:"FF001C3D"}};ws.addRow(["Level",plan.level]);ws.addRow(["Period",plan.period]);ws.addRow(["Owner",plan.owner]);const par=plan.parent&&findPlan(plan.parent);if(par)ws.addRow(["Under",`${par.name} (${par.level})`]);
-  HKIND.forEach(([k,,l])=>{ws.addRow([]);const h=ws.addRow([l]);h.getCell(1).font={bold:true,size:12,color:{argb:"FFE84E10"}};styleHead(ws.addRow(["#","Text","Owner","Serves"]));plan[k].forEach(x=>ws.addRow([hcode(plan,k,x.id),x.text,x.owner||"",linkTarget[k]?(x.links||[]).map(id=>hcode(plan,linkTarget[k],id)).join(", "):""]))});
+  const t=ws.addRow([plan.name||"Hoshin plan"]);t.font={bold:true,size:16,color:{argb:"FF0C2145"}};ws.addRow(["Level",plan.level]);ws.addRow(["Period",plan.period]);ws.addRow(["Owner",plan.owner]);const par=plan.parent&&findPlan(plan.parent);if(par)ws.addRow(["Under",`${par.name} (${lvlTxt(par)})`]);
+  HKIND.forEach(([k,,l])=>{ws.addRow([]);const h=ws.addRow([l]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};styleHead(ws.addRow(["#","Text","Owner","Serves"]));plan[k].forEach(x=>ws.addRow([hcode(plan,k,x.id),x.text,x.owner||"",linkTarget[k]?(x.links||[]).map(id=>hcode(plan,linkTarget[k],id)).join(", "):""]))});
   const mx=wb.addWorksheet("Matrix");[["annual","breakthrough"],["priorities","annual"],["metrics","priorities"]].forEach(([r,c])=>{const R=plan[r].filter(x=>x.text.trim()),Cc=plan[c].filter(x=>x.text.trim());styleHead(mx.addRow(["",...Cc.map(x=>hcode(plan,c,x.id))]));R.forEach(x=>{const row=mx.addRow([hcode(plan,r,x.id)+" "+x.text,...Cc.map(y=>(x.links||[]).includes(y.id)?"●":"")]);row.alignment={horizontal:"center"};row.getCell(1).alignment={horizontal:"left"}});mx.addRow([])});mx.getColumn(1).width=60;
   const bw=wb.addWorksheet("Monthly tracking");styleHead(bw.addRow(["Metric","Direction","Baseline","Target",...MONTHS]));
   plan.metrics.filter(m=>m.text.trim()).forEach(m=>{const r=bw.addRow([hcode(plan,"metrics",m.id)+" "+m.text,m.direction,num(m.baseline),num(m.target),...MONTHS.map((_,i)=>num((m.months||{})[i]))]);MONTHS.forEach((_,i)=>{const ok=monthOK(m,i);if(ok!==null)r.getCell(5+i).fill={type:"pattern",pattern:"solid",fgColor:{argb:ok?"FFBFE6CF":"FFF8C9B5"}}});const p=bw.addRow(["   plan","","","",...MONTHS.map((_,i)=>{const v=monthPlan(m,i);return v==null?null:Math.round(v*10)/10})]);p.font={italic:true,color:{argb:"FF8A97A8"}}});
@@ -130,10 +131,10 @@ async function exportPlanXlsx(plan){
 async function exportPlanPdf(plan){
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4",orientation:"landscape"}),H=helpers(doc),M=H.M,PW=297;
   doc.setFillColor(...BLUE);doc.rect(0,0,PW,30,"F");doc.setFillColor(...ORG);doc.rect(M,8,2.5,15,"F");doc.setFont("helvetica","bold");doc.setFontSize(16);doc.setTextColor(255,255,255);doc.text(pdfText(plan.name||"Hoshin plan"),M+7,16);
-  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(...LBL);const par=plan.parent&&findPlan(plan.parent);doc.text(pdfText(`${plan.level}, ${plan.period}${plan.owner?", owner "+plan.owner:""}${par?", under "+par.name:""}`),M+7,23);H.y=40;
+  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(...LBL);const par=plan.parent&&findPlan(plan.parent);doc.text(pdfText(`${lvlTxt(plan)}, ${plan.period}${plan.owner?", owner "+plan.owner:""}${par?", under "+par.name:""}`),M+7,23);H.y=40;
   HKIND.forEach(([k,,l])=>{H.h2(l);H.tbl(["#","Text","Owner","Serves",...(k==="metrics"?["Baseline","Target"]:[])],plan[k].map(x=>[hcode(plan,k,x.id),x.text,x.owner||"",linkTarget[k]?(x.links||[]).map(id=>hcode(plan,linkTarget[k],id)).join(", "):(x.supports||[]).length&&par?(x.supports||[]).map(id=>hcode(par,"annual",id)||hcode(par,"priorities",id)).join(", "):"",...(k==="metrics"?[x.baseline||"",x.target||""]:[])]),[12,null,34,26])});
   const ms=plan.metrics.filter(m=>m.text.trim());if(ms.length){H.h2("Monthly tracking");H.tbl(["Metric","Target",...MONTHS],ms.map(m=>[hcode(plan,"metrics",m.id)+" "+m.text,m.target||"",...MONTHS.map((_,i)=>{const v=(m.months||{})[i];const ok=monthOK(m,i);return v?(v+(ok===true?" +":ok===false?" -":"")):""})]),[60,16]);H.para("+ on or ahead of the monthly plan, - behind plan.",{color:GRY})}
-  const g=planGaps(plan);if(g.length){H.h2("Gaps");H.para(g.join(" "),{color:ORG})}
+  const g=planGaps(plan);if(g.length){H.h2("Gaps");H.para(g.join(" "),{color:WARN})}
   const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFontSize(7.5);doc.setTextColor(...GRY);doc.text(`Page ${i} of ${n}`,PW-M,203,{align:"right"})}
   await saveBlob(`hoshin-${slug(plan.name||"plan")}-${today10()}.pdf`,doc.output("blob"));toast("PDF saved.");
 }

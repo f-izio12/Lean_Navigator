@@ -5,7 +5,7 @@ function svgToPng(svg){return new Promise(res=>{try{
   const m=svg.match(/width="(\d+)" height="(\d+)"/);const w=+m[1],h=+m[2];const img=new Image();
   img.onload=()=>{try{const c=document.createElement("canvas");c.width=w*2;c.height=h*2;const x=c.getContext("2d");x.scale(2,2);x.drawImage(img,0,0);res({data:c.toDataURL("image/png"),w,h})}catch{res(null)}};
   img.onerror=()=>res(null);img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)}catch{res(null)}})}
-const BLUE=[0,28,61],ORG=[232,78,16],LBL=[0,162,219],GRY=[79,95,116],LIN=[213,220,229];
+const BLUE=[12,33,69],ORG=[195,181,152],LBL=[195,181,152],GRY=[92,107,128],LIN=[226,220,203],WARN=[163,66,42],GOLDD=[122,106,62],PALE=[244,239,225];
 function helpers(doc,pageArgs=[]){
   const M=16,PW=()=>doc.internal.pageSize.getWidth(),PH=()=>doc.internal.pageSize.getHeight(),W=()=>PW()-2*M;
   const H={doc,M,W,y:20};
@@ -14,7 +14,7 @@ function helpers(doc,pageArgs=[]){
   H.h2=t=>{H.room(14);doc.setFont("helvetica","bold");doc.setFontSize(11.5);doc.setTextColor(...BLUE);doc.text(pdfText(t),M,H.y);doc.setDrawColor(...ORG);doc.setLineWidth(.6);doc.line(M,H.y+1.8,M+14,H.y+1.8);H.y+=7};
   H.para=(t,o={})=>{const empty=!String(t||"").trim();if(empty)t=o.empty||"Nothing recorded.";doc.setFont("helvetica",o.bold?"bold":"normal");doc.setFontSize(o.size||9);doc.setTextColor(...(o.color||(empty?GRY:BLUE)));
     doc.splitTextToSize(pdfText(t),W()).forEach(l=>{H.room(5);doc.text(l,M,H.y);H.y+=4.3});H.y+=2};
-  H.kv=rs=>{doc.autoTable({startY:H.y,body:rs.map(([k,v])=>[pdfText(k),pdfText(String(v??"").trim()||"-")]),theme:"grid",styles:style,columnStyles:{0:{cellWidth:50,fontStyle:"bold",fillColor:[232,238,245]}},margin:{left:M,right:M}});H.y=doc.lastAutoTable.finalY+6};
+  H.kv=rs=>{doc.autoTable({startY:H.y,body:rs.map(([k,v])=>[pdfText(k),pdfText(String(v??"").trim()||"-")]),theme:"grid",styles:style,columnStyles:{0:{cellWidth:50,fontStyle:"bold",fillColor:PALE}},margin:{left:M,right:M}});H.y=doc.lastAutoTable.finalY+6};
   H.tbl=(head,rs,widths)=>{const body=rs.filter(r=>r.some(c=>String(c??"").trim()));if(!body.length){H.para("");return}
     const cs={};(widths||[]).forEach((w,i)=>{if(w)cs[i]={cellWidth:w}});
     doc.autoTable({startY:H.y,head:[head.map(pdfText)],body:body.map(r=>r.map(c=>pdfText(c))),theme:"grid",styles:style,headStyles:{fillColor:BLUE,textColor:255,fontStyle:"bold"},columnStyles:cs,margin:{left:M,right:M},showHead:"everyPage"});H.y=doc.lastAutoTable.finalY+6};
@@ -59,11 +59,11 @@ async function projectSectionsPdf(H,p){
   H.newPage();
   if(has){H.h2("Plan");const {tree}=planDates(p);const code=x=>tree.find(y=>y.id===x)?.code;
     H.tbl(["#","Item","Responsible","Start","End","Depends on"],tree.map(t=>[t.code,(t.depth?"  ".repeat(t.depth):"")+PTYPES[t.type]+": "+(t.title||""),t.owner||"",t.type==="ms"?"":fmtD(t._eff.s),fmtD(t._eff.e),(t.deps||[]).map(code).filter(Boolean).join(", ")]),[14,null,30,20,20,22]);
-    const iss=planIssues(p).issues;if(iss.length)H.para("Plan warnings: "+iss.join(" "),{color:ORG});
+    const iss=planIssues(p).issues;if(iss.length)H.para("Plan warnings: "+iss.join(" "),{color:WARN});
     await H.img(ganttSVG(p))}
   if(st.length){H.h2("Stakeholders");H.tbl(["Name","Role","Influence","Interest","Approach","Now","Needed","Action"],st.map(s=>[s.name,s.role,s.influence,s.interest,sQuad(s),s.current,s.desired,s.action]),[null,null,19,17,26,19,19,null]);await H.img(powerGrid(p.people.stakeholders),110);
     H.h2("RACI");const rows=raciRows(p),cells=p.people.raci.cells;H.tbl(["Activity",...st.map(s=>s.name)],rows.map(r=>[r.label,...st.map(s=>(cells[r.key]||{})[s.id]||"")]));
-    const rc=raciCheck(p);if(rc.length)H.para("RACI gaps: "+rc.join(" "),{color:ORG})}
+    const rc=raciCheck(p);if(rc.length)H.para("RACI gaps: "+rc.join(" "),{color:WARN})}
 }
 
 /* ----- A3 one-page sheet (A3 landscape) ----- */
@@ -77,8 +77,8 @@ async function a3Sheet(doc,p){
   doc.setFillColor(...BLUE);doc.rect(0,0,420,26,"F");doc.setFillColor(...ORG);doc.rect(12,6,2,14,"F");
   doc.setFont("helvetica","bold");doc.setFontSize(16);doc.setTextColor(255,255,255);doc.text(pdfText(trunc(p.title,90)),18,14);
   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(...LBL);doc.text(pdfText(`Owner: ${a.owner||"-"}    Mentor: ${a.mentor||"-"}    Started: ${fmtDate(a.date)||"-"}    Status: ${STATUSES[p.status]}, ${ST[p.phase].name}`),18,21);
-  const block=async(n,title,x,y,w,h,fill)=>{doc.setDrawColor(...LIN);doc.setLineWidth(.3);doc.rect(x,y,w,h);doc.setFillColor(232,238,245);doc.rect(x,y,w,7,"F");
-    doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor(...ORG);doc.text(String(n),x+3,y+5);doc.setTextColor(...BLUE);doc.text(pdfText(title),x+9,y+5);
+  const block=async(n,title,x,y,w,h,fill)=>{doc.setDrawColor(...LIN);doc.setLineWidth(.3);doc.rect(x,y,w,h);doc.setFillColor(...PALE);doc.rect(x,y,w,7,"F");
+    doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor(...GOLDD);doc.text(String(n),x+3,y+5);doc.setTextColor(...BLUE);doc.text(pdfText(title),x+9,y+5);
     doc.setFont("helvetica","normal");doc.setTextColor(...BLUE);await fill(x+3,y+10,w-6,h-13)};
   const img=async(svg,x,y,w,h)=>{const r=await svgToPng(svg);if(!r)return 0;let iw=w,ih=w*r.h/r.w;if(ih>h){ih=h;iw=h*r.w/r.h}doc.addImage(r.data,"PNG",x,y,iw,ih);return ih};
   const L=12,R=214,CW=194,T=32;
@@ -242,7 +242,7 @@ function openEmail(p){
     <div class="panel-head"><h2 id="mh">Email this project</h2></div>
     <div class="panel-body">
       <p class="small" style="margin-top:0">Email drafts opened from a web page can't carry attachments. Download the PDF first, then attach it to the draft.</p>
-      <div class="field"><label for="mTo">To</label><input id="mTo" type="email" multiple placeholder="name@maastrichtuniversity.nl"></div>
+      <div class="field"><label for="mTo">To</label><input id="mTo" type="email" multiple placeholder="name@example.org"></div>
       <div class="field"><label for="mSub">Subject</label><input id="mSub" value="${esc(p.tool+" report: "+p.title)}"></div>
       <div class="field"><label for="mBody">Message</label><textarea id="mBody">${esc(emailBody(p))}</textarea></div>
       <div class="row"><button class="btn" id="mPdf">1. Download PDF</button><a class="btn hot" id="mOpen" target="_blank" rel="noopener">2. Open email draft</a><button class="btn alt" id="mCopy">Copy message</button><button class="btn alt" id="mClose">Close</button></div>

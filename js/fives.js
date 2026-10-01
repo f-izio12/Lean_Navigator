@@ -51,7 +51,7 @@ const auditHTML=(path,sc,lead="Score each statement from 0 (not at all) to 4 (fu
 TABS.s1.scope=()=>`<div class="grid2">${inp("fsort.space","Digital workspace","For example: the team's shared drive, the support mailbox, the project site.",{rows:1})}${inp("fsort.kind","Type","",{options:["Shared drive","Mailbox","Team site or channel","Cloud folder","Other"]})}</div>
  <div class="grid2">${inp("fsort.owner","Owner","Who decides what stays.",{rows:1})}${inp("fsort.users","Users","Who works in it.",{rows:1})}</div>
  ${inp("fsort.problem","Problem","What goes wrong today, with a number if you can: time spent searching, duplicates, storage used, wrong versions sent.",{rows:3})}
- ${inp("fsort.retention","Retention and legal check","What must be kept, for how long, and by whom (records management, research data, personal data). Check this before anything is deleted.",{rows:3})}`;
+ ${inp("fsort.retention","Retention and legal check","What must be kept, for how long, and by whom (records management, contracts, personal data). Check this before anything is deleted.",{rows:3})}`;
 TABS.s1.audit=p=>auditHTML("fsort.baseline",p.fsort.baseline)+`<div class="chartbox" id="radar1" style="max-width:460px"></div>`;
 AFTER["s1.audit"]=p=>{S.refresh=()=>{$("#radar1").innerHTML=radar([{label:"Baseline",c:C.blue,vals:auditScores(p.fsort.baseline).map(s=>s.avg)}])}};
 TABS.s1.red=()=>`<p class="lead">"Red-tag" every item whose place is doubtful and decide: delete, archive, keep or move. Deletion only after the retention check on the Scope tab.</p>

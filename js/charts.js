@@ -1,6 +1,6 @@
 /* ================= charts (fixed colours: shared by screen and PDF) ================= */
-const C={blue:"#001C3D",orange:"#E84E10",light:"#00A2DB",grey:"#8A97A8",line:"#D5DCE5",text:"#001C3D",pale:"#E8EEF5"};
-const FONT="Verdana, Arial, sans-serif";
+const C={blue:"#0C2145",orange:"#A3422A",light:"#7A6A3E",grey:"#8C95A3",line:"#E2DCCB",text:"#0C2145",pale:"#F4EFE1",gold:"#C3B598"};
+const FONT="Jost, Verdana, Arial, sans-serif";
 const svgOpen=(w,h)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="${FONT}"><rect width="${w}" height="${h}" fill="#fff"/>`;
 function lineChart({values,title,lines:hl=[],flagIdx=[],w=760,h=300}){
   if(!values.length)return "";

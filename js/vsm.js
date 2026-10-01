@@ -70,7 +70,7 @@ function vsmFlags(k,u){const f=[];
   if(k.rolled!=null&&k.rolled<70)f.push(`Only ${fmt(k.rolled,0)}% of work passes every step first time right. Rework is a hidden source of lead time.`);
   return f}
 const STEPCOLS=u=>[{k:"step",label:"Step"},{k:"ct",label:`C/T (${u})`,type:"text",w:"90px"},{k:"co",label:`C/O (${u})`,type:"text",w:"90px"},{k:"uptime",label:"Uptime %",type:"text",w:"85px"},{k:"ops",label:"People",type:"text",w:"75px"},{k:"wait",label:`Waiting before (${u})`,type:"text",w:"110px"},{k:"pca",label:"%C&A",type:"text",w:"80px"}];
-TABS.vc.setup=()=>`${inp("vsmcur.family","Product or service family","The one flow you map, e.g. dataset deposits requiring curation.",{rows:1})}
+TABS.vc.setup=()=>`${inp("vsmcur.family","Product or service family","The one flow you map, e.g. customer requests that need a manual check.",{rows:1})}
   <div class="grid2">${inp("vsmcur.supplier","Supplier","Where the work comes from.",{rows:1})}${inp("vsmcur.customer","Customer","Who receives the output.",{rows:1})}</div>
   <div class="grid2">${inp("vsmcur.owner","Value stream owner","",{rows:1})}${inp("vsmcur.sponsor","Sponsor","",{rows:1})}</div>
   <fieldset><legend>Demand and takt</legend><div class="grid3">${inp("vsmcur.demand","Customer demand","Units per period.",{rows:1})}${inp("vsmcur.period","Period","e.g. day, week",{rows:1})}${inp("vsmcur.unit","Time unit","Used for every time on the map.",{options:["seconds","minutes","hours","days"],rerender:1})}</div>

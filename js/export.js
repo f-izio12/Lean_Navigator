@@ -26,14 +26,14 @@ async function saveBlob(name,blob){await downloads.save({filename:name,data:blob
 /* ----- Excel workbook ----- */
 const HUMAN={s:"Suppliers",i:"Inputs",p:"Process",o:"Outputs",c:"Customers",ct:"Cycle time",co:"Changeover",pca:"% complete and accurate",ops:"People",w1:"Why 1",w2:"Why 2",w3:"Why 3",w4:"Why 4",w5:"Why 5",grr:"%GRR",ndc:"Distinct categories",lsl:"Lower spec limit",usl:"Upper spec limit",msa:"Measurement system",voc:"Voice of the customer",fmea:"FMEA",ctq:"CTQ",spec:"Specification / target",x1:"Events A",n1:"Sample A",x2:"Events B",n2:"Sample B",la:"Name A",lb:"Name B",a:"Values A",b:"Values B"};
 const human=k=>HUMAN[k]||String(k).replace(/([A-Z])/g," $1").replace(/^./,c=>c.toUpperCase()).trim();
-function styleHead(row){row.eachCell(c=>{c.font={bold:true,color:{argb:"FFFFFFFF"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF001C3D"}};c.alignment={vertical:"middle",wrapText:true}})}
+function styleHead(row){row.eachCell(c=>{c.font={bold:true,color:{argb:"FFFFFFFF"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0C2145"}};c.alignment={vertical:"middle",wrapText:true}})}
 function sheetName(wb,n){n=String(n).replace(/[\\/?*[\]:]/g," ").slice(0,31);let k=n,i=2;while(wb.getWorksheet(k))k=(n.slice(0,28)+" "+i++);return k}
 function writeObject(ws,obj,prefix=""){
   const scal=[],arrs=[],objs=[];
   Object.entries(obj).forEach(([k,v])=>{if(k==="tollgate")return;if(Array.isArray(v))arrs.push([k,v]);else if(v&&typeof v==="object")objs.push([k,v]);else scal.push([k,v])});
   scal.forEach(([k,v])=>{const r=ws.addRow([prefix+human(k),v??""]);r.getCell(1).font={bold:true};r.getCell(2).alignment={wrapText:true,vertical:"top"}});
-  objs.forEach(([k,v])=>{ws.addRow([]);const h=ws.addRow([human(k)]);h.getCell(1).font={bold:true,size:12,color:{argb:"FFE84E10"}};writeObject(ws,v)});
-  arrs.forEach(([k,v])=>{ws.addRow([]);const h=ws.addRow([human(k)]);h.getCell(1).font={bold:true,size:12,color:{argb:"FFE84E10"}};
+  objs.forEach(([k,v])=>{ws.addRow([]);const h=ws.addRow([human(k)]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};writeObject(ws,v)});
+  arrs.forEach(([k,v])=>{ws.addRow([]);const h=ws.addRow([human(k)]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};
     const rowsF=v.filter(r=>r&&typeof r==="object"&&Object.values(r).some(x=>String(x??"").trim()));if(!rowsF.length){ws.addRow(["Nothing recorded"]);return}
     const keys=Object.keys(rowsF[0]).filter(x=>typeof rowsF[0][x]!=="object");styleHead(ws.addRow(keys.map(human)));rowsF.forEach(r=>{const rr=ws.addRow(keys.map(x=>r[x]??""));rr.alignment={wrapText:true,vertical:"top"}})});
 }
@@ -48,7 +48,7 @@ function planSheet(wb,p,name="Plan"){
     const r=ws.addRow([t.code,PTYPES[t.type],"   ".repeat(t.depth)+(t.title||""),t.desc||"",t.owner||"",t.type==="ms"?null:t._eff.s!=null?new Date(t._eff.s):null,t._eff.e!=null?new Date(t._eff.e):null,t.type!=="ms"&&t._eff.s!=null&&t._eff.e!=null?Math.round((t._eff.e-t._eff.s)/DAY)+1:null,(t.deps||[]).map(code).filter(Boolean).join(", "),""]);
     r.getCell(6).numFmt=r.getCell(7).numFmt="dd mmm yyyy";if(t.depth===0)r.font={bold:true};
     r.getCell(10).dataValidation={type:"list",allowBlank:true,formulae:['"Not started,In progress,Done,Blocked"']};
-    weeks.forEach((w,i)=>{const{s,e}=t._eff;if(s==null||e==null)return;if(s<=w+6*DAY&&e>=w){const c=r.getCell(cols.length+1+i);c.fill={type:"pattern",pattern:"solid",fgColor:{argb:t.type==="ms"?"FFE84E10":t.type==="wp"?"FF001C3D":t.type==="story"?"FF00A2DB":"FF8A97A8"}}}})});
+    weeks.forEach((w,i)=>{const{s,e}=t._eff;if(s==null||e==null)return;if(s<=w+6*DAY&&e>=w){const c=r.getCell(cols.length+1+i);c.fill={type:"pattern",pattern:"solid",fgColor:{argb:t.type==="ms"?"FF7A6A3E":t.type==="wp"?"FF0C2145":t.type==="story"?"FFC3B598":"FF8C95A3"}}}})});
   [6,12,40,36,18,13,13,7,12,13].forEach((w,i)=>ws.getColumn(i+1).width=w);weeks.forEach((_,i)=>ws.getColumn(cols.length+1+i).width=3.2);
   return ws;
 }
@@ -56,11 +56,11 @@ async function exportXLSX(p){
   if(!window.ExcelJS)throw new Error("The Excel library did not load. Reload the app.");
   const wb=new ExcelJS.Workbook();wb.creator="Lean Navigator";wb.created=new Date();
   const sum=wb.addWorksheet("Summary");sum.getColumn(1).width=28;sum.getColumn(2).width=90;
-  const t=sum.addRow([p.title]);t.font={bold:true,size:16,color:{argb:"FF001C3D"}};
+  const t=sum.addRow([p.title]);t.font={bold:true,size:16,color:{argb:"FF0C2145"}};
   const cv=COVER[p.tool](p);[["Method",p.tool],["Status",STATUSES[p.status]],["Current stage",ST[p.phase].name],["Created",fmtDate(p.created)],["Last updated",fmtDate(p.updated)],["Exported",fmtDate(new Date().toISOString())],...cv.people,...cv.summary].forEach(([k,v])=>{const r=sum.addRow([k,v??""]);r.getCell(1).font={bold:true};r.getCell(2).alignment={wrapText:true,vertical:"top"}});
   sum.addRow([]);styleHead(sum.addRow(["Stage","Status / decision"]));DEF[p.tool].order.forEach(k=>sum.addRow([ST[k].name,`${stageStatus(p,k)}${tgOf(p,k).decision?", decision: "+tgOf(p,k).decision:""}`]));
   for(const k of DEF[p.tool].order){const ws=wb.addWorksheet(sheetName(wb,ST[k].name));ws.getColumn(1).width=30;for(let i=2;i<=10;i++)ws.getColumn(i).width=24;
-    writeObject(ws,p[ST[k].key]);const tg=tgOf(p,k);ws.addRow([]);const h=ws.addRow([DEF[p.tool].gate]);h.getCell(1).font={bold:true,size:12,color:{argb:"FFE84E10"}};
+    writeObject(ws,p[ST[k].key]);const tg=tgOf(p,k);ws.addRow([]);const h=ws.addRow([DEF[p.tool].gate]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};
     ST[k].tg.forEach(([c,l])=>ws.addRow([l,tg.checks[c]?"Yes":"No"]));ws.addRow(["Decision",tg.decision||""]);ws.addRow(["Notes",tg.notes||""])}
   if(p.plan.items.length)planSheet(wb,p);
   const st=p.people.stakeholders.filter(s=>s.name);

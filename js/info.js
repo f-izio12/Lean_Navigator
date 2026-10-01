@@ -50,23 +50,23 @@ Object.assign(INFO,{
 });
 const F=(w,g,b)=>({w,g,b});
 Object.assign(FIELDI,{
- "define.charter.businessCase":F("Explains why the organisation should spend time on this rather than something else.","Late returns delay 40% of dataset publications linked to funder deadlines, risking compliance with NWO data policy.","We want to improve our processes."),
- "define.charter.problem":F("Describes the gap between what happens and what should happen. It must not contain a cause or a solution, or the analysis is decided before it starts.","Since January 2026, 18% of dataset deposits are returned for metadata corrections, adding an average of 6 working days to publication.","We need a new metadata tool because researchers don't read the guidelines."),
- "define.charter.baseline":F("The starting point you will measure improvement against. Name the source so the number can be checked.","18% of deposits returned (curation log, January to June 2026, n = 412).","Quite a lot of returns."),
- "define.charter.goal":F("Uses the same metric as the baseline, with a target value and a date.","Reduce returns from 18% to 8% by 30 June 2027.","Improve the deposit process significantly."),
- "define.charter.inScope":F("Defines where the process starts and ends, and which units, products or channels are included.","From deposit submission in DataverseNL to publication, UM researchers only.","The whole data process."),
- "define.charter.outScope":F("Stops scope creep. If it is not written here, someone will add it later.","Other institutions on DataverseNL; changes to the Dataverse software itself.",""),
- "define.charter.benefit":F("An estimate with its assumptions lets the sponsor judge whether the project is worth it.","About 300 curator hours a year (412 deposits × 10% fewer returns × 7 hours per return).","Big savings."),
+ "define.charter.businessCase":F("Explains why the organisation should spend time on this rather than something else.","Returned requests delay 40% of customer orders that have contractual deadlines, risking penalty clauses.","We want to improve our processes."),
+ "define.charter.problem":F("Describes the gap between what happens and what should happen. It must not contain a cause or a solution, or the analysis is decided before it starts.","Since January 2026, 18% of customer requests are returned for missing information, adding an average of 6 working days to completion.","We need a new form because customers don't read the instructions."),
+ "define.charter.baseline":F("The starting point you will measure improvement against. Name the source so the number can be checked.","18% of requests returned (request log, January to June 2026, n = 412).","Quite a lot of returns."),
+ "define.charter.goal":F("Uses the same metric as the baseline, with a target value and a date.","Reduce returns from 18% to 8% by 30 June 2027.","Improve the request process significantly."),
+ "define.charter.inScope":F("Defines where the process starts and ends, and which units, products or channels are included.","From submission of the online request form to completion; online channel only.","The whole customer process."),
+ "define.charter.outScope":F("Stops scope creep. If it is not written here, someone will add it later.","Requests by phone and email; changes to the ticketing software itself.",""),
+ "define.charter.benefit":F("An estimate with its assumptions lets the sponsor judge whether the project is worth it.","About 300 staff hours a year (412 requests × 10% fewer returns × 7 hours per return).","Big savings."),
  "measure.msa.method":F("Variable data (times, weights) uses Gauge R&R. Pass or fail judgements use attribute agreement. Data taken from a system uses a data audit against source records.","",""),
  "measure.baseline.lsl":F("Specification limits come from the customer or a requirement, not from the data. Leave empty if there is none.","USL 5 working days (service level agreement).","The average of last year."),
- "a3plan.current":F("Go and see. Write only what you observed or measured, and quantify it.","In 4 weeks, 23 of 51 loan requests waited more than 3 days; requests wait in a shared mailbox checked twice a week.","The process is slow and people are frustrated."),
- "a3plan.target":F("What will be true when the problem is solved, measured on the same metric as the current condition.","90% of loan requests handled within 1 working day by 1 March 2027.","Faster loan handling."),
+ "a3plan.current":F("Go and see. Write only what you observed or measured, and quantify it.","In 4 weeks, 23 of 51 customer queries waited more than 3 days; queries wait in a shared mailbox checked twice a week.","The process is slow and people are frustrated."),
+ "a3plan.target":F("What will be true when the problem is solved, measured on the same metric as the current condition.","90% of customer queries answered within 1 working day by 1 March 2027.","Faster query handling."),
  "a3plan.rootSummary":F("The one to three causes that, if removed, would close the gap. Each needs evidence, not a hunch.","Shared mailbox has no owner on 3 of 5 days (rota check, 4 weeks).","Lack of communication."),
- "kzprep.problem":F("What is wrong today, with numbers. The event exists to fix this.","Onboarding a new data steward takes 23 working days and involves 9 hand-offs.","Onboarding needs a new portal."),
+ "kzprep.problem":F("What is wrong today, with numbers. The event exists to fix this.","Onboarding a new employee takes 23 working days and involves 9 hand-offs.","Onboarding needs a new portal."),
  "kzprep.objectives":F("Targets the team can reach and measure by the last day of the event. One per line.","Reduce onboarding steps from 31 to 20.\nReduce hand-offs from 9 to 4.","Make onboarding better."),
- "vsmcur.family":F("Map one product or service family: items that go through largely the same steps. Mixing families produces a map nobody recognises.","Dataset deposits that need curation.","Everything the library does."),
- "vsmcur.demand":F("How many units the customer needs per period. Together with available time it sets the pace (takt).","20 deposits per week.",""),
- "vsmcur.avail":F("Working time available per period, minus breaks and meetings, in the same unit as the cycle times.","1,800 minutes per week (one curator, 30 hours).","")
+ "vsmcur.family":F("Map one product or service family: items that go through largely the same steps. Mixing families produces a map nobody recognises.","Customer requests that need a manual check.","Everything the department does."),
+ "vsmcur.demand":F("How many units the customer needs per period. Together with available time it sets the pace (takt).","20 requests per week.",""),
+ "vsmcur.avail":F("Working time available per period, minus breaks and meetings, in the same unit as the cycle times.","1,800 minutes per week (one specialist, 30 hours).","")
 });
 Object.assign(INFO,{
  "vD.charter":I("Agree what new process or service is needed, why it must be designed rather than improved, and who will own it.","Opportunity, why a new design, goal, scope, design risks, team including the future process owner, dates and benefit.","A convincing reason not to use DMAIC, a measurable dated goal, and the future process owner involved from the start."),
@@ -99,6 +99,6 @@ Object.assign(INFO,{
  "gate.5S":I("Check the step is really done before moving on.","Tick what is done, then record the decision.","Honest ticks.")
 });
 Object.assign(FIELDI,{
- "dvdefine.whyNew":F("DMADV is expensive. If the existing process could be improved, DMAIC is faster and cheaper. Say why that is not enough.","No process exists for depositing restricted-access datasets; today they are handled by email case by case.","The current process is bad."),
- "fsort.retention":F("Some files must be kept by law or policy (personnel records, research data, financial records). Deleting them can be a breach. Check with records management or your data steward first.","Research data: keep 10 years after publication (university policy). Personnel files: HR only, do not touch.","")
+ "dvdefine.whyNew":F("DMADV is expensive. If the existing process could be improved, DMAIC is faster and cheaper. Say why that is not enough.","No process exists for handling requests that involve confidential customer data; today they are handled by email case by case.","The current process is bad."),
+ "fsort.retention":F("Some files must be kept by law or policy (personnel records, contracts, financial records). Deleting them can be a breach. Check with records management or your data protection officer first.","Contracts: keep for the period your policy sets after they end. Personnel files: HR only, do not touch.","")
 });

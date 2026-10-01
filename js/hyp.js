@@ -1,12 +1,12 @@
 /* ================= Hypothesis tests (DMAIC Analyse) ================= */
 const TESTS=["2-sample t-test","Paired t-test","One-way ANOVA","Chi-square test","2-proportion test","Correlation and regression"];
 const TESTHELP={
- "2-sample t-test":"Are the averages of two independent groups different? Example: processing time for requests from faculty A against faculty B. Uses Welch's version, which does not assume equal variances.",
- "Paired t-test":"Did the same items change between two measurements? Example: the same 15 datasets curated before and after a new checklist. Values must be in the same order in both lists.",
+ "2-sample t-test":"Are the averages of two independent groups different? Example: processing time for requests handled by team A against team B. Uses Welch's version, which does not assume equal variances.",
+ "Paired t-test":"Did the same items change between two measurements? Example: the same 15 orders processed before and after a new checklist. Values must be in the same order in both lists.",
  "One-way ANOVA":"Are the averages of three or more groups different? Example: turnaround time by team.",
  "Chi-square test":"Are two categorical variables related? Example: is the error type linked to the submission channel? Enter counts, not percentages.",
  "2-proportion test":"Is the defect rate different between two groups? Example: 18 of 120 returned against 7 of 110 returned.",
- "Correlation and regression":"Does Y move with X? Example: dataset size against curation time. Shows the strength of the relationship, not the cause."
+ "Correlation and regression":"Does Y move with X? Example: order size against processing time. Shows the strength of the relationship, not the cause."
 };
 const newTest=()=>({name:"",type:TESTS[0],alpha:"0.05",a:"",b:"",la:"",lb:"",groups:"",x1:"",n1:"",x2:"",n2:"",notes:""});
 function verdict(pv,alpha,h1){return pv<alpha?`Reject the null hypothesis (p ${fmtP(pv)} < ${alpha}). The data supports: ${h1}.`:`Fail to reject the null hypothesis (p ${fmtP(pv)} ≥ ${alpha}). No evidence that ${h1.charAt(0).toLowerCase()+h1.slice(1)}. This does not prove there is no effect: the sample may be too small.`}
@@ -63,18 +63,18 @@ function testInputs(t,i){
   const P=`analyse.tests.${i}`,ta=(k,l,h,rows=6)=>`<div class="field"><label for="${P}.${k}">${l}</label>${h?`<div class="hint">${h}</div>`:""}<textarea id="${P}.${k}" data-bind="${P}.${k}" rows="${rows}">${esc(t[k])}</textarea></div>`,
     ip=(k,l,ph)=>`<div class="field"><label for="${P}.${k}">${l}</label><input id="${P}.${k}" data-bind="${P}.${k}" value="${esc(t[k])}" ${ph?`placeholder="${esc(ph)}"`:""}></div>`;
   switch(t.type){
-    case "2-sample t-test":return `<div class="grid2">${ip("la","Name of group A","e.g. Faculty A")}${ip("lb","Name of group B","e.g. Faculty B")}${ta("a","Group A values","One per line, or separated by spaces or semicolons.")}${ta("b","Group B values","")}</div>`;
+    case "2-sample t-test":return `<div class="grid2">${ip("la","Name of group A","e.g. Team A")}${ip("lb","Name of group B","e.g. Team B")}${ta("a","Group A values","One per line, or separated by spaces or semicolons.")}${ta("b","Group B values","")}</div>`;
     case "Paired t-test":return `<div class="grid2">${ip("la","First measurement","Before")}${ip("lb","Second measurement","After")}${ta("a","First values","Same order as the second list.")}${ta("b","Second values","")}</div>`;
     case "One-way ANOVA":return ta("groups","Groups","One group per line: name, colon, values. Example: Team A: 12 15 11 14",7);
     case "Chi-square test":return ta("groups","Contingency table (counts)","One row per line, optionally with a label. Example: Web form: 30 12 8",7);
     case "2-proportion test":return `<div class="grid2">${ip("la","Name of group A","")}${ip("lb","Name of group B","")}</div><div class="grid2"><div class="grid2">${ip("x1","Events in A","e.g. 18")}${ip("n1","Sample size A","e.g. 120")}</div><div class="grid2">${ip("x2","Events in B","e.g. 7")}${ip("n2","Sample size B","e.g. 110")}</div></div>`;
-    case "Correlation and regression":return `<div class="grid2">${ip("la","X name","e.g. Dataset size (GB)")}${ip("lb","Y name","e.g. Curation time (hours)")}${ta("a","X values","Same order as Y.")}${ta("b","Y values","")}</div>`;
+    case "Correlation and regression":return `<div class="grid2">${ip("la","X name","e.g. Order size (items)")}${ip("lb","Y name","e.g. Processing time (hours)")}${ta("a","X values","Same order as Y.")}${ta("b","Y values","")}</div>`;
   }
   return "";
 }
 TABS.A.tests=p=>`<p class="lead">Test a suspected cause with data. Pick the test by data type: continuous data and 2 groups, 2-sample or paired t-test; 3 or more groups, ANOVA; counts in categories, chi-square; yes/no rates, 2-proportion; two continuous variables, correlation.</p>
   ${p.analyse.tests.map((t,i)=>`<div class="card test">
-    <div class="grid3">${`<div class="field"><label for="tn${i}">Hypothesis being tested</label><input id="tn${i}" data-bind="analyse.tests.${i}.name" value="${esc(t.name)}" placeholder="e.g. Faculty affects curation time"></div>`}
+    <div class="grid3">${`<div class="field"><label for="tn${i}">Hypothesis being tested</label><input id="tn${i}" data-bind="analyse.tests.${i}.name" value="${esc(t.name)}" placeholder="e.g. Team affects processing time"></div>`}
       <div class="field"><label for="tt${i}">Test</label><select id="tt${i}" data-bind="analyse.tests.${i}.type" data-rerender="1">${TESTS.map(x=>`<option ${x===t.type?"selected":""}>${x}</option>`).join("")}</select></div>
       <div class="field"><label for="ta${i}">Significance level (α)</label><select id="ta${i}" data-bind="analyse.tests.${i}.alpha">${["0.10","0.05","0.01"].map(x=>`<option ${x===t.alpha?"selected":""}>${x}</option>`).join("")}</select></div></div>
     <div class="flag info" style="margin-bottom:12px">${esc(TESTHELP[t.type])}</div>
