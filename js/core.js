@@ -13,7 +13,7 @@ const rows=(path,n=1)=>Array.from({length:n},()=>({...BLANK[path]}));
 
 /* ================= state & helpers ================= */
 const STATUSES={ongoing:"Ongoing",onhold:"On hold",closed:"Closed"};
-let S={view:"home",filter:"all",q:"",projects:[],current:null,stage:null,tab:null,chat:[],reco:null,title:null,busy:false,coach:{},coachBusy:false,refresh:null,info:{}};
+let S={pview:"method",view:"home",filter:"all",q:"",projects:[],current:null,stage:null,tab:null,chat:[],reco:null,title:null,busy:false,coach:{},coachBusy:false,refresh:null,info:{}};
 let store=null,sample=null,downloads=null;
 const $=s=>document.querySelector(s);
 const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -47,9 +47,10 @@ async function flush(p){
 function setSaveState(t){const el=$("#saveState");if(el)el.textContent=t}
 function newProject(title,tool,notes){
   return{kind:"project",id:uidGen(),title:title||"Untitled project",tool,status:"ongoing",phase:DEF[tool]?DEF[tool].order[0]:"",
-    created:new Date().toISOString(),updated:new Date().toISOString(),advisorNotes:notes||"",...blankFor(tool)};
+    created:new Date().toISOString(),updated:new Date().toISOString(),advisorNotes:notes||"",...blankFor(tool),...projBlank()};
 }
-function ensureModel(p){if(!DEF[p.tool])return p;const b=blankFor(p.tool);for(const k in b)p[k]=deepMerge(b[k],p[k]);if(!DEF[p.tool].order.includes(p.phase))p.phase=DEF[p.tool].order[0];return p}
+const projBlank=()=>({plan:{items:[]},people:{stakeholders:[],raci:{custom:[],cells:{}}}});
+function ensureModel(p){const pb=projBlank();p.plan=deepMerge(pb.plan,p.plan);p.people=deepMerge(pb.people,p.people);if(!DEF[p.tool])return p;const b=blankFor(p.tool);for(const k in b)p[k]=deepMerge(b[k],p[k]);if(!DEF[p.tool].order.includes(p.phase))p.phase=DEF[p.tool].order[0];return p}
 const tgOf=(p,id)=>p[ST[id].key].tollgate;
 const autoTG=(p,id)=>AUTO[id]?AUTO[id](p):{};
 function progress(p,id){const t=tgOf(p,id).checks,l=ST[id].tg;return Math.round(l.filter(([k])=>t[k]).length/l.length*100)}

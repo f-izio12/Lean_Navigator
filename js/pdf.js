@@ -19,7 +19,7 @@ function helpers(doc,pageArgs=[]){
     const cs={};(widths||[]).forEach((w,i)=>{if(w)cs[i]={cellWidth:w}});
     doc.autoTable({startY:H.y,head:[head.map(pdfText)],body:body.map(r=>r.map(c=>pdfText(c))),theme:"grid",styles:style,headStyles:{fillColor:BLUE,textColor:255,fontStyle:"bold"},columnStyles:cs,margin:{left:M,right:M},showHead:"everyPage"});H.y=doc.lastAutoTable.finalY+6};
   H.img=async(svg,maxW)=>{if(!svg)return;const r=await svgToPng(svg);if(!r){H.para("(Chart could not be rendered in this browser.)",{color:GRY});return}
-    const w=Math.min(maxW||W(),r.w*.26,W()),h=w*r.h/r.w;H.room(h+4);doc.addImage(r.data,"PNG",M,H.y,w,h);H.y+=h+6};
+    let w=Math.min(maxW||W(),r.w*.26,W()),h=w*r.h/r.w;const mh=doc.internal.pageSize.getHeight()-45;if(h>mh){w=w*mh/h;h=mh}H.room(h+4);doc.addImage(r.data,"PNG",M,H.y,w,h);H.y+=h+6};
   return H;
 }
 function rowsOf(arr,keys){return arr.map(r=>keys.map(k=>typeof k==="function"?k(r):r[k]??""))}
@@ -48,9 +48,22 @@ async function buildPDF(p){
     const t=tgOf(p,k);H.h2(ST[k].name+": "+d.gate.toLowerCase());H.tbl(["Check","Done"],ST[k].tg.map(([c,l])=>[l,t.checks[c]?"Yes":"No"]),[null,20]);
     H.kv([["Decision",{go:ST[k].next?"Go to "+ST[ST[k].next].name:"Project closed",rework:"Rework",stop:"Stop the project"}[t.decision]||"No decision recorded"],["Notes",t.notes]]);
   }
+  await projectSectionsPdf(H,p);
   const n=doc.getNumberOfPages();
   for(let i=1;i<=n;i++){doc.setPage(i);const PW=doc.internal.pageSize.getWidth(),PHh=doc.internal.pageSize.getHeight();doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(...GRY);doc.text(pdfText(trunc(p.title,80)),M,PHh-7);doc.text(`Page ${i} of ${n}`,PW-M,PHh-7,{align:"right"})}
   return doc.output("blob");
+}
+
+async function projectSectionsPdf(H,p){
+  const has=p.plan.items.length,st=p.people.stakeholders.filter(s=>s.name);if(!has&&!st.length)return;
+  H.newPage();
+  if(has){H.h2("Plan");const {tree}=planDates(p);const code=x=>tree.find(y=>y.id===x)?.code;
+    H.tbl(["#","Item","Responsible","Start","End","Depends on"],tree.map(t=>[t.code,(t.depth?"  ".repeat(t.depth):"")+PTYPES[t.type]+": "+(t.title||""),t.owner||"",t.type==="ms"?"":fmtD(t._eff.s),fmtD(t._eff.e),(t.deps||[]).map(code).filter(Boolean).join(", ")]),[14,null,30,20,20,22]);
+    const iss=planIssues(p).issues;if(iss.length)H.para("Plan warnings: "+iss.join(" "),{color:ORG});
+    await H.img(ganttSVG(p))}
+  if(st.length){H.h2("Stakeholders");H.tbl(["Name","Role","Influence","Interest","Approach","Now","Needed","Action"],st.map(s=>[s.name,s.role,s.influence,s.interest,sQuad(s),s.current,s.desired,s.action]),[null,null,19,17,26,19,19,null]);await H.img(powerGrid(p.people.stakeholders),110);
+    H.h2("RACI");const rows=raciRows(p),cells=p.people.raci.cells;H.tbl(["Activity",...st.map(s=>s.name)],rows.map(r=>[r.label,...st.map(s=>(cells[r.key]||{})[s.id]||"")]));
+    const rc=raciCheck(p);if(rc.length)H.para("RACI gaps: "+rc.join(" "),{color:ORG})}
 }
 
 /* ----- A3 one-page sheet (A3 landscape) ----- */
@@ -166,16 +179,49 @@ PDFSEC.vf=async(H,p)=>{const f=p.vsmfut,c=p.vsmcur,a=vsmCalc(c.steps,c),b=vsmCal
   H.h2("Kaizen bursts");H.tbl(["#","Where","Improvement","Expected effect"],f.bursts.map((z,i)=>[z.improvement?String(i+1):"",z.where,z.improvement,z.effect]),[8])};
 PDFSEC.vp=async(H,p)=>{H.h2("Implementation plan");H.tbl(["Action","Burst / method","Owner","Due","Status"],rowsOf(p.vsmplan.actions,["action","burst","owner",r=>r.due?fmtDate(r.due):"",r=>r.action?r.status:""]));H.kv([["Review rhythm",p.vsmplan.review]])};
 
+/* ----- DMADV sections ----- */
+COVER.DMADV=p=>{const d=p.dvdefine;return{people:[["Sponsor",d.sponsor],["Future process owner",d.processOwner],["Project lead",d.lead],["Core team",d.team]],summary:[["Opportunity",d.opportunity],["Why a new design",d.whyNew],["Goal",d.goal]]}};
+PDFSEC.vD=async(H,p)=>{const d=p.dvdefine;H.h2("Design charter");H.kv([["Opportunity",d.opportunity],["Why a new design",d.whyNew],["Goal",d.goal],["In scope",d.inScope],["Out of scope",d.outScope],["Design risks",d.risks],["Sponsor",d.sponsor],["Future process owner",d.processOwner],["Lead",d.lead],["Team",d.team],["Start",fmtDate(d.start)],["Define tollgate",fmtDate(d.gateDate)],["Expected benefit",d.benefit]])};
+PDFSEC.vM=async(H,p)=>{const m=p.dvmeasure;H.h2("Voice of the customer");H.tbl(["Customer","What they say","Underlying need"],rowsOf(m.voc,["customer","voice","need"]));
+  H.h2("Kano analysis");H.tbl(["Need","Category","Importance"],rowsOf(m.kano,["need",r=>r.need?r.category:"",r=>r.need?r.importance:""]),[null,32,24]);
+  H.h2("CTQs");H.tbl(["CTQ","How measured","Target","Lower","Upper","Importance","Need"],rowsOf(m.ctqs,["ctq","measure","target","lsl","usl",r=>r.ctq?r.importance:"","need"]),[null,null,22,16,16,18,null])};
+PDFSEC.vA=async(H,p)=>{const a=p.dvanalyse,{ctq,con,datum,tot}=pughCalc(p);H.h2("Design concepts");H.tbl(["Concept","Description"],rowsOf(a.concepts,["name","desc"]),[50]);
+  H.h2("Pugh matrix");if(con.length>=2&&ctq.length){H.tbl(["CTQ","Weight",...con.map(c=>c.name+(c.id===datum?" (datum)":""))],[...ctq.map(q=>[q.ctq,String(num(q.importance)||1),...con.map(c=>c.id===datum?"S":(a.pugh[q.id+"|"+c.id]||"S"))]),["Weighted total","",...tot.map(t=>String(t.w))]])}else H.para("");
+  H.h2("Selection");H.kv([["Selected concept",a.concepts.find(c=>c.id===a.selected)?.name||""],["Rationale",a.rationale]])};
+PDFSEC.vG=async(H,p)=>{const d=p.dvdesign,{ctq,fe,h,score,tot}=hoqCalc(p);H.h2("House of Quality");
+  if(ctq.length&&fe.length)H.tbl(["CTQ","Weight",...fe.map(f=>f.feature)],[...ctq.map(q=>[q.ctq,String(num(q.importance)||1),...fe.map(f=>h[q.id+"|"+f.id]||"")]),["Feature importance","",...score.map(s=>s+(tot?` (${Math.round(s/tot*100)}%)`:""))]]);else H.para("");
+  H.h2("Detailed design");H.para(d.detail);H.h2("Design FMEA");H.tbl(["Failure mode","Effect","S","O","D","RPN","Mitigation"],rowsOf(d.dfmea,["mode","effect","s","o","d",r=>rpnCalc(r).t,"action"]),[null,null,9,9,9,13,null]);
+  H.h2("Design scorecard");H.tbl(["CTQ","Target","Limits","Predicted","Result"],ctq.map(q=>[q.ctq,q.target,[q.lsl,q.usl].map(v=>v||"-").join(" to "),d.predicted[q.id]||"",ctqStatus(q,d.predicted[q.id]).t]))};
+PDFSEC.vV=async(H,p)=>{const v=p.dvverify,ctq=ctqList(p);H.h2("Pilot and verification");H.kv([["Scope",v.scope],["Duration",v.duration],["Success criteria",v.criteria],["Observations",v.notes]]);
+  H.tbl(["CTQ","Target","Limits","Measured","Result"],ctq.map(q=>[q.ctq,q.target,[q.lsl,q.usl].map(x=>x||"-").join(" to "),v.actual[q.id]||"",ctqStatus(q,v.actual[q.id]).t]));
+  H.h2("Handover and control");H.tbl(["What","Target / limits","Method","Frequency","Owner","Reaction plan"],rowsOf(v.plan,["metric","target","method","freq","owner","reaction"]));H.kv([["Documentation and training",v.docs],["Handover",v.handover],["Lessons learned",v.lessons]]);
+  if(dvComplete(p)){H.h2("Suggestion");H.para(dvSuggestText(p))}};
+/* ----- PDCA sections ----- */
+COVER.PDCA=p=>{const f=p.pdframe;return{people:[["Owner",f.owner]],summary:[["Problem",f.problem],["Metric",f.metric],["Baseline",f.baseline],["Target",f.target?`${f.target}${f.targetDate?" by "+fmtDate(f.targetDate):""}`:""]]}};
+PDFSEC.pc1=async(H,p)=>{const f=p.pdframe;H.h2("Problem and target");H.kv([["Problem",f.problem],["Owner",f.owner],["Metric",f.metric],["Baseline",f.baseline],["Target",f.target],["Target date",fmtDate(f.targetDate)]])};
+PDFSEC.pc2=async(H,p)=>{H.h2("Cycles");H.tbl(["#","Change","Prediction","Done","Result","Learning","Act"],p.pdset.cycles.map((c,i)=>[c.change?String(i+1):"",c.change,c.prediction,c.done,c.result,c.learning,c.change?c.decision:""]),[8,null,null,null,18,null,18]);
+  const b=parseNums(p.pdframe.baselineData),res=filled(p.pdset.cycles,["change"]).map(c=>num(c.result)).filter(v=>v!=null);if(b.length+res.length>1)await H.img(lineChart({values:[...b,...res],title:`${p.pdframe.metric||"Metric"}: baseline then cycles`,lines:[{v:num(p.pdframe.target),label:"Target",c:C.orange,dash:1}],flagIdx:res.map((_,i)=>b.length+i)}))};
+PDFSEC.pc3=async(H,p)=>{const s=p.pdstd;H.h2("Standardise");H.kv([["Adopted",s.adopted],["Documented in",s.where],["Shared with",s.share],["Next improvement",s.next]])};
+/* ----- 5S sections ----- */
+COVER["5S"]=p=>{const s=p.fsort;return{people:[["Workspace owner",s.owner],["Users",s.users]],summary:[["Workspace",`${s.space}${s.kind?" ("+s.kind+")":""}`],["Problem",s.problem]]}};
+const auditTbl=(H,sc)=>H.tbl(["S","Statement","Score"],S5.flatMap(([k,l])=>S5Q[k].map((q,i)=>[i===0?l:"",q,sc[k+i]??""])),[28,null,16]);
+PDFSEC.s1=async(H,p)=>{const s=p.fsort;H.h2("Scope");H.kv([["Workspace",s.space],["Type",s.kind],["Owner",s.owner],["Users",s.users],["Problem",s.problem],["Retention and legal check",s.retention]]);
+  H.h2("Baseline audit");auditTbl(H,s.baseline);await H.img(radar([{label:"Baseline",c:C.blue,vals:auditScores(s.baseline).map(x=>x.avg)}]),90);
+  H.h2("Red-tag list");H.tbl(["Item","Location","Decision","Owner","Done"],rowsOf(s.red,["item","location",r=>r.item?r.decision:"","owner",r=>r.item?r.done:""]),[null,null,22,30,14])};
+PDFSEC.s2=async(H,p)=>{H.h2("Structure and naming");H.kv([["Folder structure",p.forder.structure],["Naming convention",p.forder.naming],["Other rules",p.forder.rules]])};
+PDFSEC.s3=async(H,p)=>{H.h2("Clean-up");H.tbl(["Issue","Before","After","Change","What was done"],rowsOf(p.fshine.issues,["issue","before","after",r=>chgCalc(r).t,"action"]),[null,18,18,18,null])};
+PDFSEC.s4=async(H,p)=>{H.h2("Standard");H.kv([["Standard",p.fstandard.standard],["Where it lives",p.fstandard.where],["Onboarding",p.fstandard.onboarding]])};
+PDFSEC.s5=async(H,p)=>{const s=p.fsustain;H.h2("Audits");H.kv([["Rhythm and owner",s.rhythm]]);H.tbl(["Date","Who","Findings"],rowsOf(s.audits,[r=>r.date?fmtDate(r.date):"","who","notes"]),[28,36,null]);
+  H.h2("Latest audit against baseline");auditTbl(H,s.scores);await H.img(radar([{label:"Baseline",c:C.grey,vals:auditScores(p.fsort.baseline).map(x=>x.avg)},{label:"Latest audit",c:C.orange,vals:auditScores(s.scores).map(x=>x.avg)}]),90)};
+
 /* ================= export & email ================= */
 const slug=t=>String(t||"project").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)||"project";
-const toolSlug={"DMAIC":"dmaic","A3 problem solving":"a3","Kaizen event":"kaizen","Value stream mapping":"vsm"};
+const toolSlug={"DMAIC":"dmaic","A3 problem solving":"a3","Kaizen event":"kaizen","Value stream mapping":"vsm","DMADV":"dmadv","PDCA":"pdca","5S":"5s"};
 async function exportPDF(p){
   if(!window.jspdf||!window.jspdf.jsPDF){toast("The PDF library did not load. Reload the page and try again.");return}
   if(!downloads){toast("Saving files isn't available in this view.");return}
-  const btn=$("#pdf");if(btn){btn.disabled=true;btn.textContent="Preparing PDF…"}
-  try{const blob=await buildPDF(p);await downloads.save({filename:`${slug(p.title)}-${toolSlug[p.tool]||"lean"}-report-${new Date().toISOString().slice(0,10)}.pdf`,data:blob});toast("PDF saved.")}
+    try{const blob=await buildPDF(p);await downloads.save({filename:`${slug(p.title)}-${toolSlug[p.tool]||"lean"}-report-${new Date().toISOString().slice(0,10)}.pdf`,data:blob});toast("PDF saved.")}
   catch(e){if(e&&e.code==="declined")toast("Download cancelled.");else if(e&&e.code==="rate_limited")toast("A save prompt is already open.");else{console.error(e);toast("The PDF could not be created. "+(e&&e.message?e.message:""))}}
-  finally{if(btn){btn.disabled=false;btn.textContent="Download PDF"}}
 }
 function emailBody(p){const cv=COVER[p.tool](p);
   return `Hello,

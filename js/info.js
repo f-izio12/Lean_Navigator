@@ -68,3 +68,37 @@ Object.assign(FIELDI,{
  "vsmcur.demand":F("How many units the customer needs per period. Together with available time it sets the pace (takt).","20 deposits per week.",""),
  "vsmcur.avail":F("Working time available per period, minus breaks and meetings, in the same unit as the cycle times.","1,800 minutes per week (one curator, 30 hours).","")
 });
+Object.assign(INFO,{
+ "vD.charter":I("Agree what new process or service is needed, why it must be designed rather than improved, and who will own it.","Opportunity, why a new design, goal, scope, design risks, team including the future process owner, dates and benefit.","A convincing reason not to use DMAIC, a measurable dated goal, and the future process owner involved from the start."),
+ "vD.notes":I("Keep the advisor conversation that led to this project.","Nothing: filled in automatically.","Not reviewed."),
+ "vM.voc":I("Find out what customers actually need from the new design.","Statements from real customers and the need behind each one.","Needs gathered from customers, not assumed by the team."),
+ "vM.kano":I("Separate what customers take for granted from what makes a difference.","Each need with its Kano category and importance.","Plausible categories, and must-be needs that are easy to forget."),
+ "vM.ctq":I("Turn needs into measurable requirements the design must meet.","Each CTQ with how it is measured, a target or limits, its importance and the need it serves.","Measurable CTQs with limits, and full traceability between needs and CTQs."),
+ "vA.concepts":I("Create real alternatives before choosing.","At least three genuinely different concepts, with a short description each.","Real alternatives rather than variations of one idea."),
+ "vA.pugh":I("Compare concepts against the CTQs instead of on preference.","A reference concept, and for every other concept a +, S or − per CTQ.","A fair datum, consistent scoring, and attention to the minuses of the best concept."),
+ "vA.select":I("Choose the concept and justify it.","The selected concept and why, including how its weak points will be handled.","A choice consistent with the evidence, or a clear reason for departing from it."),
+ "vG.hoq":I("Translate CTQs into design features and see which features matter most.","Design features, and a 9, 3 or 1 wherever a feature drives a CTQ.","Every important CTQ served by a strong feature, and no features that serve nothing."),
+ "vG.detail":I("Describe the design concretely enough to build it.","Process steps, roles, systems, rules, forms and service levels.","A design someone outside the team could implement."),
+ "vG.dfmea":I("Anticipate how the new design could fail.","Failure modes with severity, occurrence, detection and mitigations.","High-risk failure modes all mitigated."),
+ "vG.scorecard":I("Predict, before building, whether the design will meet each CTQ.","A predicted value per CTQ, with the basis for the prediction noted in the detailed design.","Honest predictions that meet the limits."),
+ "vV.pilot":I("Prove the design works in practice.","Pilot scope, duration, success criteria set in advance, and a measured value per CTQ.","Measured, not estimated, results, and honest handling of CTQs that miss."),
+ "vV.handover":I("Hand the new process over so it stays under control.","Control plan with reaction plans, documentation and training, the handover and lessons learned.","A formal handover and a control plan someone actually owns."),
+ "pc1.frame":I("Frame a small improvement you can test quickly.","The problem with a number, an owner, one metric, the baseline and a dated target.","A problem small enough for PDCA and one clear metric."),
+ "pc2.cycles":I("Test changes one at a time and learn from each.","Per cycle: the change, your prediction, what you did, the result, what you learned, and the decision.","A prediction before every cycle, and learning recorded even when the prediction was wrong."),
+ "pc2.chart":I("See whether the cycles move the metric towards the target.","Nothing extra: drawn from the baseline data and cycle results.","Not reviewed separately."),
+ "pc3.std":I("Make the change that worked the normal way of working.","What was adopted, where it is documented, who was told, and the next improvement.","A documented, shared standard."),
+ "s1.scope":I("Define which digital workspace you are cleaning up and check what must be kept.","The workspace, its owner and users, the problem, and the retention and legal check.","A clear owner, and the retention check done before any deletion."),
+ "s1.audit":I("Measure the starting point.","A score from 0 to 4 for each of the 15 statements.","Honest scores: an inflated baseline hides the improvement."),
+ "s1.red":I("Decide, item by item, what stays.","Each doubtful item with a decision, owner and whether it is done.","No deletions without the retention check, and decisions carried out."),
+ "s2.structure":I("Give everything a logical place and a recognisable name.","The agreed folder structure and a naming convention with examples.","A shallow structure that matches how the team works."),
+ "s3.clean":I("Fix what makes the workspace unreliable.","Each issue with a before and after count and what was done.","Concrete numbers, including an access review."),
+ "s4.rules":I("Write the rules down so they outlast the clean-up.","A one-page standard, where it lives, and how new colleagues learn it.","Short, findable rules that are part of onboarding."),
+ "s5.audits":I("Keep the workspace in order over time.","The audit rhythm and owner, audit dates and findings, and the latest scores.","Follow-up audits done and compared with the baseline."),
+ "gate.DMADV":I("Decide formally whether the stage is complete and the design may continue.","Tick each check the sponsor would agree is done, then record the decision.","Honest ticks."),
+ "gate.PDCA":I("Pause and decide whether to continue.","Tick what is done, then record the decision.","Honest ticks."),
+ "gate.5S":I("Check the step is really done before moving on.","Tick what is done, then record the decision.","Honest ticks.")
+});
+Object.assign(FIELDI,{
+ "dvdefine.whyNew":F("DMADV is expensive. If the existing process could be improved, DMAIC is faster and cheaper. Say why that is not enough.","No process exists for depositing restricted-access datasets; today they are handled by email case by case.","The current process is bad."),
+ "fsort.retention":F("Some files must be kept by law or policy (personnel records, research data, financial records). Deleting them can be a breach. Check with records management or your data steward first.","Research data: keep 10 years after publication (university policy). Personnel files: HR only, do not touch.","")
+});

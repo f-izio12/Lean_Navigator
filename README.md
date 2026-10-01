@@ -8,8 +8,20 @@ A local-first workspace for Lean and Six Sigma improvement projects. It runs in 
 - **A3 problem solving** (Plan, Do, Check, Act) with a one-page A3 PDF.
 - **Kaizen event** (Prepare, Event, Follow-up) with waste walk, try-storming, before-and-after results and sustain audits.
 - **Value stream mapping** (current state, future state, plan) with takt time, lead time, process cycle efficiency and an automatically drawn map.
+- **DMADV** (Define, Measure, Analyse, Design, Verify) for new processes and services: Kano analysis, CTQs with limits, Pugh matrix, House of Quality, design FMEA, design scorecard and CTQ verification.
+- **PDCA** in fast cycles, each with a prediction, result, learning and an adopt, adapt or abandon decision.
+- **Digital 5S** for shared drives, mailboxes and team sites, with a 15-point audit, red-tag list, retention check and radar chart.
 
-Every stage has a checkpoint (tollgate, mentor check or review), instant quality checks, an explanation of what to fill in, and a PDF report. An optional AI advisor suggests which method to start with and gives a strict black belt review of each stage.
+Every stage has a checkpoint (tollgate, mentor check or review), instant quality checks and an explanation of what to fill in. Every project also has a **Plan and Gantt** view (work packages, stories, sub-tasks, milestones and finish-to-start dependencies), **Stakeholders** (power and interest grid) and a **RACI**.
+
+Above the projects sit two portfolio pages:
+
+- **Pipeline**: collect improvement ideas, score them on benefit and effort, link them to a strategic priority, and decide: start as a project (with a method, or ask the advisor), move to the **Just do it** log, park or reject.
+- **Strategy (Hoshin Kanri)**: plans for the university, a faculty or service, and a team. Breakthrough objectives, annual objectives, improvement priorities and metrics are linked level by level, shown as matrices, and tracked month by month against a straight-line plan. Projects and ideas link to priorities, so you see which priorities have no work behind them.
+
+**Catchball between levels** works with share files: the owner of a plan exports a share file, the level below imports it as its parent plan (read-only) and links its own objectives to it. Share files are not encrypted, because they are meant to be shared.
+
+**Export** (one button, several formats): PDF report, Excel workbook, Jira Cloud import file (CSV), agile backlog in Excel, and an email draft. Exports are one-way: once tasks are in Excel or Jira, they live there. An optional AI advisor suggests which method to start with and gives a strict black belt review of each stage.
 
 ## Privacy in one paragraph
 
@@ -58,6 +70,10 @@ Settings, then AI provider. Choose a provider, type the model name exactly as yo
 
 Your API key sits encrypted in your vault, but while the app is unlocked it is in the browser's memory and is sent to the provider with each request. Use a key with a spending limit.
 
+## Importing the plan into Jira Cloud
+
+Export, then "Jira Cloud import file (CSV)". Work packages become epics, stories stay stories, sub-tasks are linked to their story through the Parent column (Issue ID of the parent row, as Jira Cloud expects), and dependencies go in "Blocked by" columns. The app shows the import steps after saving the file. Notes: the CSV import usually needs Jira administrator rights; assignees only map when names match Jira users exactly; test in a test project first.
+
 ## Publish your own copy on GitHub Pages
 
 No programming needed.
@@ -90,14 +106,17 @@ css/app.css             styles (default theme: dark blue #001C3D, orange-red #E8
 js/core.js              registry, helpers, statistics
 js/charts.js            SVG charts shared by screen and PDF
 js/ui.js                library, advisor, project workspace, checkpoints, review
-js/dmaic.js, a3.js, kaizen.js, vsm.js   the four methods
+js/dmaic.js, a3.js, kaizen.js, vsm.js, dmadv.js, pdca.js, fives.js   the methods
 js/hyp.js               hypothesis tests
 js/info.js              step explanations
 js/pdf.js               PDF reports and email draft
 js/vault.js             encryption, storage, file sync
 js/ai.js                AI provider adapters
+js/plan.js              plan, dependencies and Gantt
+js/people.js            stakeholders and RACI
+js/export.js            export menu, Excel, Jira CSV, backlog
 js/app.js               start-up, vault screens, settings
-vendor/                 jsPDF and jsPDF-AutoTable (MIT)
+vendor/                 jsPDF, jsPDF-AutoTable and ExcelJS (all MIT)
 sw.js, manifest.webmanifest, icons/   installable app
 ```
 

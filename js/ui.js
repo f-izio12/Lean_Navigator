@@ -1,5 +1,5 @@
 /* ================= home & advisor ================= */
-function render(){$("#navHome").setAttribute("aria-current",S.view==="home"?"page":"false");S.view==="home"?renderHome():renderProject()}
+function render(){[["navHome","home"],["navPipeline","pipeline"],["navStrategy","strategy"]].forEach(([b,v])=>{const e=$("#"+b);if(e)e.setAttribute("aria-current",S.view===v||(v==="home"&&S.view==="project")?"page":"false")});S.refresh=null;S.view==="home"?renderHome():S.view==="pipeline"?renderPipeline():S.view==="strategy"?renderStrategy():renderProject()}
 function renderHome(){
   $("#app").innerHTML=`
   <div class="home">
@@ -14,6 +14,7 @@ function renderHome(){
     <section class="panel" aria-label="Project library">
       <div class="panel-head"><h2>Project library</h2><span class="muted small" id="count"></span></div>
       <div class="panel-body">
+        <div id="saveBar" class="savebar"></div>
         <input class="search" id="q" type="search" placeholder="Search projects" value="${esc(S.q)}" aria-label="Search projects">
         <div class="filters" role="group" aria-label="Filter by status">${[["all","All"],["ongoing","Ongoing"],["onhold","On hold"],["closed","Closed"]].map(([k,l])=>`<button class="chip" data-f="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join("")}</div>
         <ul class="plist" id="plist"></ul>
@@ -30,7 +31,7 @@ function renderHome(){
   document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{S.filter=b.dataset.f;document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.f===S.filter));renderList()});
   $("#skip").onclick=()=>createProject($("#directTool").value,null);
 }
-function projMeta(p){if(!DEF[p.tool])return p.tool+" (workspace not built yet)";const s=ST[p.phase];return `${p.tool}, ${p.status==="closed"?"closed in "+s.name:s.name}`}
+function projMeta(p){if(!DEF[p.tool])return p.tool+" (workspace not built yet)";const s=ST[p.phase],l=p.hoshinLink&&allPriorities().find(x=>x.id===p.hoshinLink);return `${p.tool}, ${p.status==="closed"?"closed in "+s.name:s.name}${l?", serves "+l.code+" ("+l.plan+")":""}`}
 function renderList(){
   const q=S.q.toLowerCase();
   const items=S.projects.filter(p=>(S.filter==="all"||p.status===S.filter)&&(!q||(p.title+" "+p.tool).toLowerCase().includes(q))).sort((a,b)=>b.updated.localeCompare(a.updated));
@@ -61,7 +62,7 @@ const ADVISOR=`You are a Lean Six Sigma Master Black Belt with 30 years of pract
 Decision heuristics:
 - Just do it: cause and solution already known, low risk, low cost, reversible.
 - PDCA: small, local, iterative improvement with one owner.
-- 5S: workplace organisation, searching, clutter, visual control.
+- 5S (digital): organising a shared digital workspace (shared drive, mailbox, team site): time lost searching, duplicates, wrong versions, unclear access.
 - Kaizen event: narrow scope, the team can find and apply a fix in 3 to 5 days.
 - A3 problem solving: moderate problem, one owner, root cause unknown but a data-heavy study is not needed.
 - Value stream mapping: flow or lead-time problem crossing several teams where the real problem is not yet located. Often precedes DMAIC or Kaizen.
@@ -89,10 +90,11 @@ async function send(){
 async function createProject(tool,title){
   const notes=S.chat.map(m=>m.role==="user"?"You: "+m.content:"Advisor: "+m.reply).join("\n\n");
   const p=newProject(title||"New "+tool+" project",tool,notes);
+  if(typeof linkIdeaToProject==="function")linkIdeaToProject(p);
   S.projects.push(p);try{await store.save(p)}catch{toast("Project created but not saved. Check your access.")}
   S.chat=[];S.reco=null;S.title=null;openProject(p.id);
 }
-function openProject(id){const p=S.projects.find(x=>x.id===id);ensureModel(p);S.current=p;S.view="project";if(DEF[p.tool]){S.stage=p.phase;S.tab=ST[p.phase].tabs[0][0]}render();window.scrollTo(0,0)}
+function openProject(id){const p=S.projects.find(x=>x.id===id);ensureModel(p);S.current=p;S.view="project";S.pview="method";if(DEF[p.tool]){S.stage=p.phase;S.tab=ST[p.phase].tabs[0][0]}render();window.scrollTo(0,0)}
 
 /* ================= project view ================= */
 function renderProject(){
@@ -102,11 +104,14 @@ function renderProject(){
   <div class="proj-head">
     <input class="title-input" id="ptitle" value="${esc(p.title)}" aria-label="Project title">
     <select id="pstatus" aria-label="Project status">${Object.entries(STATUSES).map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select>
-    ${d?`<button class="btn" id="pdf">Download PDF</button><button class="btn alt" id="mail">Email</button>`:""}
+    ${d?exportMenuHTML():""}
     <button class="btn alt" id="del">Delete</button>
     <div style="flex-basis:100%" class="small muted">${esc(p.tool)}, created ${fmtDate(p.created)}. <span id="saveState" class="save-state">Saved</span></div>
+    ${allPriorities().length?`<div class="slink small"><label for="plink">Serves strategic priority</label>${priSelect(p.hoshinLink,'id="plink"')}</div>`:""}
   </div>
-  ${d?`<div class="rail" style="grid-template-columns:repeat(${d.order.length},1fr)" role="tablist" aria-label="${esc(p.tool)} stages">
+  ${d?`<div class="pviews" role="tablist" aria-label="Project views">${[["method",esc(p.tool)],["plan","Plan and Gantt"],["stakeholders","Stakeholders"],["raci","RACI"]].map(([k,l])=>`<button class="pv" role="tab" data-pv="${k}" aria-selected="${S.pview===k}">${l}</button>`).join("")}</div>`:""}
+  ${d&&S.pview!=="method"?`<div class="sheet solo" id="pvSheet"></div>`:""}
+  ${d&&S.pview==="method"?`<div class="rail" style="grid-template-columns:repeat(${d.order.length},1fr)" role="tablist" aria-label="${esc(p.tool)} stages">
     ${d.order.map((k,i)=>{const ci=d.order.indexOf(p.phase),st=stageStatus(p,k),done=st==="Passed"||st==="Completed";
       return `<button class="stage ${done?"done":""} ${i===ci?"current":""}" data-stage="${k}" aria-current="${S.stage===k}">
       <div class="letter">${ST[k].letter}</div><div class="name">${ST[k].name}</div><div class="note">${st}</div>
@@ -118,13 +123,16 @@ function renderProject(){
       <div class="sheet" id="sheet" role="tabpanel"></div>
     </div>
     <aside class="coach" aria-label="Black belt review"><div class="panel-head"><h3>Black belt review: ${ST[S.stage].name}</h3></div><div class="panel-body" id="coach"></div></aside>
-  </div>`:`<div class="panel later"><h2>${esc(p.tool)} workspace is not built yet</h2><p class="muted">The project is saved in your library. Available methods: ${BUILT().join(", ")}.</p>
+  </div>`:d?"":`<div class="panel later"><h2>${esc(p.tool)} workspace is not built yet</h2><p class="muted">The project is saved in your library. Available methods: ${BUILT().join(", ")}.</p>
     ${p.advisorNotes?`<h3 style="margin-top:20px">Advisor conversation</h3><p style="white-space:pre-wrap">${esc(p.advisorNotes)}</p>`:""}</div>`}`;
   $("#ptitle").oninput=e=>{p.title=e.target.value||"Untitled project";scheduleSave(p)};
   $("#pstatus").onchange=e=>{p.status=e.target.value;scheduleSave(p)};
+  const pl=$("#plink");if(pl)pl.onchange=()=>{p.hoshinLink=pl.value;scheduleSave(p)};
   $("#del").onclick=async()=>{if(!confirm(`Delete "${p.title}"? This cannot be undone.`))return;try{await store.remove(p.id)}catch{}S.projects=S.projects.filter(x=>x.id!==p.id);S.view="home";S.current=null;render();toast("Project deleted")};
   if(!d)return;
-  $("#pdf").onclick=()=>exportPDF(p);$("#mail").onclick=()=>openEmail(p);
+  bindExportMenu(p);
+  document.querySelectorAll("[data-pv]").forEach(b=>b.onclick=()=>{S.pview=b.dataset.pv;renderProject()});
+  if(S.pview!=="method"){const el=$("#pvSheet");S.refresh=null;({plan:renderPlanView,stakeholders:renderStakeView,raci:renderRaciView})[S.pview](el);return}
   document.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{S.stage=b.dataset.stage;S.tab=ST[S.stage].tabs[0][0];renderProject()});
   document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.t===S.tab));renderSheet()});
   renderSheet();renderCoach();
@@ -179,7 +187,7 @@ function renderSheet(){
   S.refresh=null;let h="";
   if(prev&&o.indexOf(id)>o.indexOf(p.phase)&&S.tab!=="tollgate")h+=`<div class="banner">You are working ahead of the ${ST[prev].name} ${DEF[p.tool].gate.toLowerCase()}. Allowed, but everything here rests on an unapproved ${ST[prev].name} stage.</div>`;
   h+=infoBlock(S.tab==="tollgate"?"gate."+p.tool:id+"."+S.tab);
-  if(S.tab==="tollgate"){el.innerHTML=h+tollgateHTML(id);bindTollgate(el,id);bind(el);return}
+  if(S.tab==="tollgate"){el.innerHTML=h+tollgateHTML(id)+(id==="vV"?`<div id="dvSuggest"></div>`:"");bindTollgate(el,id);bind(el);if(id==="vV")dvSuggestion(p);return}
   h+=(TABS[id][S.tab]||(()=>""))(p);
   el.innerHTML=h;
   const after=AFTER[id+"."+S.tab];if(after)after(p);
