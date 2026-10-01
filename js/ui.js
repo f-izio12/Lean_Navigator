@@ -36,7 +36,7 @@ function renderList(){
   const q=S.q.toLowerCase();
   const items=S.projects.filter(p=>(S.filter==="all"||p.status===S.filter)&&(!q||(p.title+" "+p.tool).toLowerCase().includes(q))).sort((a,b)=>b.updated.localeCompare(a.updated));
   $("#count").textContent=`${S.projects.length} project${S.projects.length===1?"":"s"}`;
-  $("#plist").innerHTML=items.length?items.map(p=>`<li><button data-id="${p.id}"><span class="ptitle">${esc(p.title)}</span><span class="status ${p.status}">${STATUSES[p.status]}</span>
+  $("#plist").innerHTML=items.length?items.map(p=>`<li><button data-id="${esc(p.id)}"><span class="ptitle">${esc(p.title)}</span><span class="status ${esc(p.status)}">${STATUSES[p.status]}</span>
       <span class="pmeta">${esc(projMeta(p))}, updated ${fmtDate(p.updated)}</span></button></li>`).join("")
     :`<li class="empty">${S.projects.length?"No project matches this filter.":"No projects yet. Describe one to the advisor, or start one directly below."}</li>`;
   document.querySelectorAll("#plist button").forEach(b=>b.onclick=()=>openProject(b.dataset.id));
@@ -153,7 +153,7 @@ function inp(path,label,hint,o={}){
   const v=getPath(S.current,path)??"",id="f_"+path.replace(/\./g,"_");let ctl;
   const rr=o.rerender?' data-rerender="1"':"";
   if(o.options)ctl=`<select id="${id}" data-bind="${path}"${rr}>${o.options.map(x=>`<option ${x===v?"selected":""}>${esc(x)}</option>`).join("")}</select>`;
-  else if(o.type)ctl=`<input id="${id}" type="${o.type}" data-bind="${path}" value="${esc(v)}" ${o.ph?`placeholder="${esc(o.ph)}"`:""}>`;
+  else if(o.type)ctl=`<input id="${id}" type="${esc(o.type)}" data-bind="${path}" value="${esc(v)}" ${o.ph?`placeholder="${esc(o.ph)}"`:""}>`;
   else if(o.rows===1)ctl=`<input id="${id}" data-bind="${path}" value="${esc(v)}" ${o.ph?`placeholder="${esc(o.ph)}"`:""}>`;
   else ctl=`<textarea id="${id}" data-bind="${path}" rows="${o.rows||3}" ${o.ph?`placeholder="${esc(o.ph)}"`:""}>${esc(v)}</textarea>`;
   return `<div class="field"><div class="lab"><label for="${id}">${label}</label>${fieldInfo(path)}</div>${fieldInfoBody(path)}${hint?`<div class="hint">${hint}</div>`:""}${ctl}<div class="flags" id="flags_${id}"></div></div>`;
@@ -163,7 +163,7 @@ function table(path,cols,calc){
   return `<div class="wide"><table class="grid"><thead><tr>${cols.map(c=>`<th ${c.w?`style="width:${c.w}"`:""}>${c.label}</th>`).join("")}${calc?`<th>${calc.label}</th>`:""}<th style="width:40px"></th></tr></thead><tbody>
   ${rs.map((r,i)=>`<tr>${cols.map(c=>{const b=`${path}.${i}.${c.k}`,v=r[c.k]??"";
     if(c.opts)return `<td><select data-bind="${b}" aria-label="${esc(c.label)}">${c.opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select></td>`;
-    if(c.type)return `<td><input type="${c.type}" ${c.min!=null?`min="${c.min}" max="${c.max}"`:""} data-bind="${b}" value="${esc(v)}" aria-label="${esc(c.label)}"></td>`;
+    if(c.type)return `<td><input type="${esc(c.type)}" ${c.min!=null?`min="${c.min}" max="${c.max}"`:""} data-bind="${b}" value="${esc(v)}" aria-label="${esc(c.label)}"></td>`;
     return `<td><textarea data-bind="${b}" aria-label="${esc(c.label)}">${esc(v)}</textarea></td>`}).join("")}
     ${calc?`<td class="calc" id="calc_${path.replace(/\./g,"_")}_${i}"></td>`:""}
     <td><button class="x" data-del="${path}" data-i="${i}" aria-label="Remove row">×</button></td></tr>`).join("")}

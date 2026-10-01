@@ -116,12 +116,17 @@ js/ai.js                AI provider adapters
 js/plan.js              plan, dependencies and Gantt
 js/people.js            stakeholders and RACI
 js/export.js            export menu, Excel, Jira CSV, backlog
+js/security.js          validation of imported files and restored vaults
 js/app.js               start-up, vault screens, settings
 vendor/                 jsPDF, jsPDF-AutoTable and ExcelJS (all MIT)
 sw.js, manifest.webmanifest, icons/   installable app
 ```
 
 To add a method, create a file like `js/kaizen.js`: register the tool with its stages, tabs, checklists and blank data, then add its PDF sections in `js/pdf.js`.
+
+## Security
+
+See `SECURITY.md` for the security model and how to report a vulnerability privately. In short: external files (share files, backups) are validated before use, all text is escaped, and a Content-Security-Policy blocks inline scripts.
 
 ## Design and accessibility
 

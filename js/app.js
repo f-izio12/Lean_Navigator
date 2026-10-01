@@ -1,5 +1,5 @@
 /* ================= App shell: vault screens, settings, storage, start-up ================= */
-const APP_VERSION="1.2.1";
+const APP_VERSION="1.2.2";
 let saveChain=Promise.resolve();
 function persistAll(){saveChain=saveChain.then(async()=>{Vault.state.projects=S.projects;await Vault.seal();if(Vault.fileHandle&&Vault.fileStatus.startsWith("File saved"))Vault.dirty=false;updateBanner();updateSaveBar()});return saveChain}
 const _scheduleSave=scheduleSave;scheduleSave=function(p){Vault.dirty=true;_scheduleSave(p);updateSaveBar()};
@@ -90,6 +90,7 @@ async function doUnlock(secret,byCode,errEl,btn){
   }catch(e){errEl.innerHTML=flagsHTML([e.message||"Could not unlock."]);btn.disabled=false;btn.textContent=label;return false}
 }
 async function enterApp(){
+  sanitizeState(Vault.state);
   S.projects=(Vault.state.projects||[]).map(ensureModel);S.view="home";S.current=null;S.coach={};
   sample=makeAI(Vault.state.settings.ai);nav(true);render();
   try{if(navigator.storage&&navigator.storage.persist&&!(await navigator.storage.persisted()))await navigator.storage.persist()}catch{}
@@ -165,7 +166,7 @@ async function openSettings(){
    <div class="proj-head"><h2>Settings</h2><button class="btn alt" id="back">Back to the library</button></div>
    <section class="panel"><div class="panel-head"><h3>AI provider</h3><span class="small muted">${sample?"Connected: "+esc(PRESETS.find(p=>p.id===ai.preset)?.label||ai.kind)+", "+esc(ai.model):"Not connected"}</span></div><div class="panel-body">
      <p class="small muted" style="margin-top:0">Requests go directly from this browser to the provider, with the key you enter here. The key is stored encrypted in your vault. Charges are billed by the provider on your own account.</p>
-     <div class="grid2"><div class="field"><label for="aiP">Provider</label><select id="aiP">${PRESETS.map(p=>`<option value="${p.id}" ${p.id===pre.id?"selected":""}>${esc(p.label)}</option>`).join("")}</select></div>
+     <div class="grid2"><div class="field"><label for="aiP">Provider</label><select id="aiP">${PRESETS.map(p=>`<option value="${esc(p.id)}" ${p.id===pre.id?"selected":""}>${esc(p.label)}</option>`).join("")}</select></div>
      <div class="field"><label for="aiM">Model name</label><div class="hint">An ID such as gemini-3.5-flash-lite, not a product name. Use Load models to pick from the list your key can use.</div><div class="row nowrap"><input id="aiM" list="aiML" value="${esc(ai.model||"")}" autocomplete="off"><button class="btn alt" id="aiLoad" type="button">Load models</button></div><datalist id="aiML"></datalist></div></div>
      <div class="field"><label for="aiB">Base URL</label><div class="hint">Filled in when you choose a provider. Change it only for "Other" or a local server.</div><input id="aiB" value="${esc(ai.base||pre.base)}"></div>
      <div class="field"><label for="aiK">API key</label><div class="hint" id="aiKh"></div><input id="aiK" type="password" autocomplete="off" placeholder="${ai.key?"Saved. Type a new key to replace it.":""}"></div>

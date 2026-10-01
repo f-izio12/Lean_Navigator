@@ -92,7 +92,7 @@ async function a3Sheet(doc,p){
     const ch=a.whys.filter(z=>z.problem||z.root).map(z=>`${z.problem||"Symptom"}: ${[z.w1,z.w2,z.w3,z.w4,z.w5].filter(Boolean).join(" > ")}${z.root?" > ROOT CAUSE: "+z.root:""}`).join("\n");
     fitText(doc,(a.rootSummary?"Root cause: "+a.rootSummary+"\n\n":"")+ch,x,y+used,w,h-used)});
   await block(5,"Countermeasures",R,T,CW,80,(x,y,w,h)=>fitText(doc,filled(dd.counter,["counter"]).map((z,i)=>`${i+1}. ${z.counter}${z.cause?"  [root cause: "+z.cause+"]":""}${z.effect?"  Expected: "+z.effect:""}${z.owner?"  ("+z.owner+")":""}`).join("\n")||"-",x,y,w,h));
-  await block(6,"Implementation plan",R,T+82,CW,66,(x,y,w,h)=>fitText(doc,filled(dd.actions,["action"]).map(z=>`[${z.status}] ${z.action}${z.owner?" - "+z.owner:""}${z.due?", due "+fmtDate(z.due):""}`).join("\n")||"-",x,y,w,h));
+  await block(6,"Implementation plan",R,T+82,CW,66,(x,y,w,h)=>fitText(doc,filled(dd.actions,["action"]).map(z=>`[${esc(z.status)}] ${z.action}${z.owner?" - "+z.owner:""}${z.due?", due "+fmtDate(z.due):""}`).join("\n")||"-",x,y,w,h));
   await block(7,"Follow-up and next steps",R,T+150,CW,105,async(x,y,w,h)=>{const pre=parseNums(a.currentData),post=parseNums(c.afterData);let used=0;
     const b=num(c.before)??num(a.currentValue),af=num(c.after);
     const txt=[b!=null&&af!=null?`Result: ${fmt(b)} -> ${fmt(af)}${a.targetValue?" (target "+a.targetValue+")":""}`:"",c.method?"Measured by: "+c.method:"",c.worked?"Worked: "+c.worked:"",c.notworked?"Did not work: "+c.notworked:"",ac.standardise?"Standard: "+ac.standardise:"",ac.share?"Share: "+ac.share:"",ac.open?"Open: "+ac.open:""].filter(Boolean).join("\n");

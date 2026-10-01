@@ -87,14 +87,14 @@ function renderPlanView(el){
   const p=S.current,{tree}=planDates(p),{issues,conflicts}=planIssues(p);
   const row=t=>{const r=p.plan.items.find(x=>x.id===t.id),ms=t.type==="ms";
     return `<tr class="pl d${t.depth} ${conflicts.has(t.id)?"conf":""}"><td class="pcode">${t.code}</td>
-     <td><div class="pt" style="padding-left:${t.depth*16}px"><span class="badge ${t.type}">${PTYPES[t.type]}</span><input data-pi="${t.id}" data-k="title" value="${esc(r.title)}" placeholder="${ms?"Milestone name":"Title"}" aria-label="Title"></div></td>
-     <td><textarea data-pi="${t.id}" data-k="desc" aria-label="Description" rows="1">${esc(r.desc||"")}</textarea></td>
-     <td><input data-pi="${t.id}" data-k="owner" value="${esc(r.owner||"")}" placeholder="Name" aria-label="Responsible"></td>
-     <td>${ms?"":`<input type="date" data-pi="${t.id}" data-k="start" value="${esc(r.start||"")}" aria-label="Start" ${t.derived&&!r.start?`title="Taken from its items"`:""}>`}</td>
-     <td><input type="date" data-pi="${t.id}" data-k="end" value="${esc(r.end||"")}" aria-label="${ms?"Date":"End"}"></td>
+     <td><div class="pt" style="padding-left:${t.depth*16}px"><span class="badge ${esc(t.type)}">${PTYPES[t.type]}</span><input data-pi="${esc(t.id)}" data-k="title" value="${esc(r.title)}" placeholder="${ms?"Milestone name":"Title"}" aria-label="Title"></div></td>
+     <td><textarea data-pi="${esc(t.id)}" data-k="desc" aria-label="Description" rows="1">${esc(r.desc||"")}</textarea></td>
+     <td><input data-pi="${esc(t.id)}" data-k="owner" value="${esc(r.owner||"")}" placeholder="Name" aria-label="Responsible"></td>
+     <td>${ms?"":`<input type="date" data-pi="${esc(t.id)}" data-k="start" value="${esc(r.start||"")}" aria-label="Start" ${t.derived&&!r.start?`title="Taken from its items"`:""}>`}</td>
+     <td><input type="date" data-pi="${esc(t.id)}" data-k="end" value="${esc(r.end||"")}" aria-label="${ms?"Date":"End"}"></td>
      <td class="calc">${!ms&&t._eff.s!=null&&t._eff.e!=null?Math.round((t._eff.e-t._eff.s)/DAY)+1:""}${t.derived&&!ms?"*":""}</td>
-     <td><input data-pi="${t.id}" data-k="deps" value="${esc((r.deps||[]).map(d=>tree.find(x=>x.id===d)?.code).filter(Boolean).join(", "))}" placeholder="e.g. 1.2" aria-label="Depends on"></td>
-     <td class="acts">${t.type==="wp"?`<button class="x" data-addc="${t.id}" data-ct="story" title="Add a story">+ story</button>`:t.type==="story"?`<button class="x" data-addc="${t.id}" data-ct="sub" title="Add a sub-task">+ sub-task</button>`:""}<button class="x" data-pdel="${t.id}" aria-label="Remove">×</button></td></tr>`};
+     <td><input data-pi="${esc(t.id)}" data-k="deps" value="${esc((r.deps||[]).map(d=>tree.find(x=>x.id===d)?.code).filter(Boolean).join(", "))}" placeholder="e.g. 1.2" aria-label="Depends on"></td>
+     <td class="acts">${t.type==="wp"?`<button class="x" data-addc="${esc(t.id)}" data-ct="story" title="Add a story">+ story</button>`:t.type==="story"?`<button class="x" data-addc="${esc(t.id)}" data-ct="sub" title="Add a sub-task">+ sub-task</button>`:""}<button class="x" data-pdel="${esc(t.id)}" aria-label="Remove">×</button></td></tr>`};
   el.innerHTML=infoBlock("pv.plan")+`<p class="lead">A planning draft: work packages become epics, stories stay stories, sub-tasks stay sub-tasks when you export to Jira or Excel. "Depends on" means the item starts after the listed items finish (use the codes in the first column).</p>
    <div class="wide"><table class="grid plan"><thead><tr><th>#</th><th style="min-width:260px">Item</th><th style="min-width:160px">Description</th><th style="width:140px">Responsible</th><th style="width:140px">Start</th><th style="width:140px">End / date</th><th style="width:50px">Days</th><th style="width:110px">Depends on</th><th></th></tr></thead>
    <tbody>${tree.map(row).join("")||`<tr><td colspan="9" class="muted">No items yet.</td></tr>`}</tbody></table></div>

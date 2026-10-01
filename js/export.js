@@ -7,7 +7,7 @@ const EXPORTS=[
   {id:"mail",label:"Email draft",note:"Opens your email program with a summary. Attach the PDF yourself: browsers cannot attach files to an email."}
 ];
 const exportMenuHTML=()=>`<div class="menu"><button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export ▾</button>
-  <div class="menu-list" id="exportList" role="menu" hidden>${EXPORTS.map(e=>`<button role="menuitem" data-ex="${e.id}"><b>${e.label}</b><span>${e.note}</span></button>`).join("")}</div></div>`;
+  <div class="menu-list" id="exportList" role="menu" hidden>${EXPORTS.map(e=>`<button role="menuitem" data-ex="${esc(e.id)}"><b>${e.label}</b><span>${e.note}</span></button>`).join("")}</div></div>`;
 function bindExportMenu(p){
   const b=$("#exportBtn"),l=$("#exportList"),close=()=>{l.hidden=true;b.setAttribute("aria-expanded","false")};
   b.onclick=e=>{e.stopPropagation();l.hidden=!l.hidden;b.setAttribute("aria-expanded",String(!l.hidden))};

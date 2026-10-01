@@ -6,7 +6,7 @@ const IDEA_ST=["New","Under review","Started","Just do it","Parked","Rejected"];
 /* every Hoshin priority the user can link to: own plans and imported parent plans */
 function allPriorities(){const out=[];[...PF().plans.map(p=>({p,own:true})),...PF().parents.map(p=>({p,own:false}))].forEach(({p,own})=>(p.priorities||[]).forEach((x,i)=>{if(x.text&&x.text.trim())out.push({id:x.id,code:"P"+(i+1),text:x.text,plan:p.name||"Untitled plan",level:p.level,own})}));return out}
 const priLabel=id=>{const x=allPriorities().find(q=>q.id===id);return x?`${x.plan}: ${x.code} ${trunc(x.text,50)}`:""};
-const priSelect=(cur,attr)=>`<select ${attr}><option value="">No strategic link</option>${allPriorities().map(x=>`<option value="${x.id}" ${x.id===cur?"selected":""}>${esc(trunc(`${x.plan}${x.level?" ("+x.level+")":""}: ${x.code} ${x.text}`,90))}</option>`).join("")}</select>`;
+const priSelect=(cur,attr)=>`<select ${attr}><option value="">No strategic link</option>${allPriorities().map(x=>`<option value="${esc(x.id)}" ${x.id===cur?"selected":""}>${esc(trunc(`${x.plan}${x.level?" ("+x.level+")":""}: ${x.code} ${x.text}`,90))}</option>`).join("")}</select>`;
 
 /* ----- binding helper for objects outside a project ----- */
 function bindRoot(el,root,after){
@@ -37,7 +37,7 @@ function renderPipeline(){
     card.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>ideaAction(x,b.dataset.act,card))});
 }
 function ideaCard(x){const closed=!["New","Under review"].includes(x.status),proj=x.projectId&&S.projects.find(p=>p.id===x.projectId);
-  return `<div class="card idea" data-id="${x.id}"><div class="idea-head"><input data-o="title" value="${esc(x.title)}" placeholder="Idea in a few words" aria-label="Idea"><span class="status ${closed?"closed":"ongoing"}">${esc(x.status)}</span><span class="score" title="Score: benefit × (6 − effort), +3 if linked to a strategic priority">${ideaScore(x)}</span></div>
+  return `<div class="card idea" data-id="${esc(x.id)}"><div class="idea-head"><input data-o="title" value="${esc(x.title)}" placeholder="Idea in a few words" aria-label="Idea"><span class="status ${closed?"closed":"ongoing"}">${esc(x.status)}</span><span class="score" title="Score: benefit × (6 − effort), +3 if linked to a strategic priority">${ideaScore(x)}</span></div>
    <div class="grid2"><div class="field"><label>Problem or opportunity</label><textarea data-o="problem" rows="2">${esc(x.problem)}</textarea></div>
    <div><div class="grid3"><div class="field"><label>Benefit</label><select data-o="benefit">${["1","2","3","4","5"].map(v=>`<option ${v===x.benefit?"selected":""}>${v}</option>`).join("")}</select></div><div class="field"><label>Effort</label><select data-o="effort">${["1","2","3","4","5"].map(v=>`<option ${v===x.effort?"selected":""}>${v}</option>`).join("")}</select></div><div class="field"><label>Status</label><select data-o="status">${IDEA_ST.map(v=>`<option ${v===x.status?"selected":""}>${v}</option>`).join("")}</select></div></div>
    <div class="grid2"><div class="field"><label>Proposed by</label><input data-o="proposer" value="${esc(x.proposer)}"></div><div class="field"><label>Added</label><input type="date" data-o="added" value="${esc(x.added)}"></div></div></div></div>
