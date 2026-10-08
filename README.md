@@ -126,7 +126,7 @@ To add a method, create a file like `js/kaizen.js`: register the tool with its s
 
 ## Security
 
-See `SECURITY.md` for the security model and how to report a vulnerability privately. In short: external files (share files, backups) are validated before use, all text is escaped, and a Content-Security-Policy blocks inline scripts.
+See `SECURITY.md` for the security model and how to report a vulnerability privately. In short: external files (share files, backups) are validated before use, all text is escaped, a Content-Security-Policy blocks inline scripts, the app refuses to run inside another page, the AI key is sent only over https (or to a model on your own computer), and an older copy of your vault cannot silently replace a newer one.
 
 ## Design and accessibility
 
