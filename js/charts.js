@@ -1,7 +1,7 @@
 /* ================= charts (fixed colours: shared by screen and PDF) ================= */
-const C={blue:"#0C2145",orange:"#A3422A",light:"#7A6A3E",grey:"#8C95A3",line:"#E2DCCB",text:"#0C2145",pale:"#F4EFE1",gold:"#C3B598"};
-const FONT="Jost, Verdana, Arial, sans-serif";
-const svgOpen=(w,h)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="${FONT}"><rect width="${w}" height="${h}" fill="#fff"/>`;
+var C={blue:"#0C2145",orange:"#A3422A",light:"#7A6A3E",grey:"#8C95A3",line:"#E2DCCB",text:"#0C2145",pale:"#F4EFE1",gold:"#C3B598"};
+var FONT="Jost, Verdana, Arial, sans-serif";
+var svgOpen=(w,h)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="${FONT}"><rect width="${w}" height="${h}" fill="#fff"/>`;
 function lineChart({values,title,lines:hl=[],flagIdx=[],w=760,h=300}){
   if(!values.length)return "";
   const all=[...values,...hl.map(l=>l.v).filter(v=>v!=null&&Number.isFinite(v))];
@@ -17,7 +17,7 @@ function lineChart({values,title,lines:hl=[],flagIdx=[],w=760,h=300}){
   values.forEach((v,i)=>{if(i%step===0||i===values.length-1)g+=`<text x="${X(i)}" y="${T+ph+16}" font-size="10" text-anchor="middle" fill="${C.grey}">${i+1}</text>`});
   return g+`</svg>`;
 }
-function paretoChart(rs,w=760,h=320,title="Pareto"){
+function paretoChart(rs,w=760,h=320,title=_t("Pareto")){
   const d=rs.map(r=>({cat:r.cat,n:num(r.count)||0})).filter(r=>r.cat&&r.n>0).sort((a,b)=>b.n-a.n);
   if(!d.length)return{svg:"",vital:[],total:0};
   const total=d.reduce((a,b)=>a+b.n,0);let cum=0;d.forEach(r=>{cum+=r.n;r.cum=cum/total*100});
@@ -33,10 +33,10 @@ function paretoChart(rs,w=760,h=320,title="Pareto"){
   return{svg:g+`</svg>`,vital,total,d};
 }
 function wrapWords(t,n,max){const w=String(t||"").split(/\s+/),out=[];let l="";for(const x of w){if((l+" "+x).trim().length>n){if(l)out.push(l);l=x}else l=(l+" "+x).trim()}if(l)out.push(l);return out.slice(0,max).map((s,i)=>i===max-1&&out.length>max?trunc(s,n-1)+"…":s)}
-const BONES=[["people","People"],["method","Method"],["machine","Machine"],["material","Material"],["measurement","Measurement"],["environment","Environment"]];
+var BONES=[["people",_t("People")],["method",_t("Method")],["machine",_t("Machine")],["material",_t("Material")],["measurement",_t("Measurement")],["environment",_t("Environment")]];
 function fishboneChart(fb,effect,w=900,h=440){
   const sy=h/2;let g=svgOpen(w,h)+`<line x1="30" y1="${sy}" x2="700" y2="${sy}" stroke="${C.blue}" stroke-width="3"/><rect x="700" y="${sy-60}" width="190" height="120" fill="${C.blue}"/>`;
-  wrapWords(effect||"Effect (problem)",22,5).forEach((l,i)=>g+=`<text x="712" y="${sy-38+i*18}" font-size="11" fill="#fff">${esc(l)}</text>`);
+  wrapWords(effect||_t("Effect (problem)"),22,5).forEach((l,i)=>g+=`<text x="712" y="${sy-38+i*18}" font-size="11" fill="#fff">${esc(l)}</text>`);
   BONES.forEach(([k,label],i)=>{
     const top=i<3,bx=[230,450,670][i%3],ex=bx-130,ey=top?40:h-40;
     g+=`<line x1="${bx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${C.blue}" stroke-width="2"/><text x="${ex}" y="${top?ey-10:ey+18}" font-size="12" font-weight="700" fill="${C.orange}" text-anchor="middle">${label}</text>`;
@@ -49,8 +49,8 @@ function quadrant(impact,effort){const hi=impact>=3.5,lo=effort<=2.5;return hi&&
 function matrixChart(sol,w=420,h=340){
   const L=50,T=20,pw=w-L-20,ph=h-T-50,X=e=>L+(e-.5)/5*pw,Y=i=>T+ph-(i-.5)/5*ph;
   let g=svgOpen(w,h)+`<rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="none" stroke="${C.line}"/><line x1="${L+pw/2}" y1="${T}" x2="${L+pw/2}" y2="${T+ph}" stroke="${C.line}"/><line x1="${L}" y1="${T+ph/2}" x2="${L+pw}" y2="${T+ph/2}" stroke="${C.line}"/>`;
-  [["Quick wins",L+6,T+16],["Major projects",L+pw/2+6,T+16],["Fill-ins",L+6,T+ph-8],["Reconsider",L+pw/2+6,T+ph-8]].forEach(([t,x,y])=>g+=`<text x="${x}" y="${y}" font-size="10" fill="${C.grey}">${t}</text>`);
-  g+=`<text x="${L+pw/2}" y="${h-12}" font-size="11" text-anchor="middle" fill="${C.text}">Effort (1 low to 5 high)</text><text transform="translate(16,${T+ph/2}) rotate(-90)" font-size="11" text-anchor="middle" fill="${C.text}">Impact</text>`;
+  [[_t("Quick wins"),L+6,T+16],[_t("Major projects"),L+pw/2+6,T+16],[_t("Fill-ins"),L+6,T+ph-8],[_t("Reconsider"),L+pw/2+6,T+ph-8]].forEach(([t,x,y])=>g+=`<text x="${x}" y="${y}" font-size="10" fill="${C.grey}">${t}</text>`);
+  g+=`<text x="${L+pw/2}" y="${h-12}" font-size="11" text-anchor="middle" fill="${C.text}">${_t("Effort (1 low to 5 high)")}</text><text transform="translate(16,${T+ph/2}) rotate(-90)" font-size="11" text-anchor="middle" fill="${C.text}">${_t("Impact")}</text>`;
   sol.forEach((s,i)=>{const im=num(s.impact),ef=num(s.effort);if(!s.solution||im==null||ef==null)return;const x=X(ef)+((i%3)-1)*8,y=Y(im)+((i%2)?6:-6);
     g+=`<circle cx="${x}" cy="${y}" r="10" fill="${quadrant(im,ef)==="Quick win"?C.orange:C.blue}"/><text x="${x}" y="${y+4}" font-size="10" fill="#fff" text-anchor="middle">${i+1}</text>`});
   return g+`</svg>`;
@@ -64,7 +64,7 @@ function groupPlot(groups,title,w=640,h=300){
   groups.forEach((gr,i)=>{const cx=L+cw*i+cw/2,st=stats(gr.vals);
     gr.vals.forEach((v,j)=>{g+=`<circle cx="${cx+((j*37)%21-10)*Math.min(1,cw/80)}" cy="${Y(v)}" r="3" fill="${C.blue}" fill-opacity=".6"/>`});
     g+=`<line x1="${cx-cw*.3}" x2="${cx+cw*.3}" y1="${Y(st.mean)}" y2="${Y(st.mean)}" stroke="${C.orange}" stroke-width="3"/>`;
-    g+=`<text x="${cx}" y="${T+ph+16}" font-size="10" text-anchor="middle" fill="${C.text}">${esc(trunc(gr.label,16))}</text><text x="${cx}" y="${T+ph+30}" font-size="9" text-anchor="middle" fill="${C.grey}">mean ${esc(fmt(st.mean))}, n ${st.n}</text>`});
+    g+=`<text x="${cx}" y="${T+ph+16}" font-size="10" text-anchor="middle" fill="${C.text}">${esc(trunc(gr.label,16))}</text><text x="${cx}" y="${T+ph+30}" font-size="9" text-anchor="middle" fill="${C.grey}">${_t("mean {mean}, n {n}",{mean:esc(fmt(st.mean)),n:st.n})}</text>`});
   return g+`</svg>`;
 }
 function scatterChart(x,y,fit,xl,yl,w=640,h=320){
@@ -81,7 +81,7 @@ function barCompare(items,title,w=640,h=280){
   const d=items.filter(r=>num(r.before)!=null&&num(r.after)!=null);if(!d.length)return "";
   const L=20,T=34,B=46,pw=w-2*L,ph=h-T-B,gw=pw/d.length;
   let g=svgOpen(w,h)+`<text x="${L}" y="20" font-size="13" font-weight="700" fill="${C.text}">${esc(title)}</text>`;
-  g+=`<rect x="${w-190}" y="10" width="10" height="10" fill="${C.grey}"/><text x="${w-176}" y="19" font-size="10" fill="${C.text}">Before</text><rect x="${w-120}" y="10" width="10" height="10" fill="${C.orange}"/><text x="${w-106}" y="19" font-size="10" fill="${C.text}">After</text>`;
+  g+=`<rect x="${w-190}" y="10" width="10" height="10" fill="${C.grey}"/><text x="${w-176}" y="19" font-size="10" fill="${C.text}">${_t("Before")}</text><rect x="${w-120}" y="10" width="10" height="10" fill="${C.orange}"/><text x="${w-106}" y="19" font-size="10" fill="${C.text}">${_t("After")}</text>`;
   d.forEach((r,i)=>{const b=num(r.before),a=num(r.after),m=Math.max(Math.abs(b),Math.abs(a))||1,x=L+i*gw,bw=gw*.3;
     [[b,C.grey,x+gw*.18],[a,C.orange,x+gw*.52]].forEach(([v,c,xx])=>{const bh=Math.abs(v)/m*(ph-14);g+=`<rect x="${xx}" y="${T+ph-bh}" width="${bw}" height="${bh}" fill="${c}"/><text x="${xx+bw/2}" y="${T+ph-bh-3}" font-size="10" text-anchor="middle" fill="${C.text}">${esc(fmt(v))}</text>`});
     g+=`<text x="${x+gw/2}" y="${T+ph+16}" font-size="10" text-anchor="middle" fill="${C.text}">${esc(trunc(r.metric||r.label||"",22))}</text>`});

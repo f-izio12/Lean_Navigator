@@ -12,14 +12,14 @@ function blankFor(tool){const d=DEF[tool];if(!d)return{};const m={};d.stages.for
 const rows=(path,n=1)=>Array.from({length:n},()=>({...BLANK[path]}));
 
 /* ================= state & helpers ================= */
-const STATUSES={ongoing:"Ongoing",onhold:"On hold",closed:"Closed"};
+const STATUSES=new Proxy({ongoing:"Ongoing",onhold:"On hold",closed:"Closed"},{get:(o,k)=>typeof o[k]==="string"?_t(o[k]):o[k]});
 let S={pview:"method",view:"home",filter:"all",q:"",projects:[],current:null,stage:null,tab:null,chat:[],reco:null,title:null,busy:false,coach:{},coachBusy:false,refresh:null,info:{}};
 let store=null,sample=null,downloads=null;
 const $=s=>document.querySelector(s);
 const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function toast(t){const el=$("#toast");el.textContent=t;el.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display="none",3200)}
 const uidGen=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-const fmtDate=iso=>{try{return iso?new Date(iso).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):""}catch{return ""}};
+const fmtDate=iso=>{try{return iso?new Date(iso).toLocaleDateString(uiLocale(),{day:"numeric",month:"short",year:"numeric"}):""}catch{return ""}};
 const getPath=(o,p)=>p.split(".").reduce((a,k)=>a==null?a:a[k],o);
 function setPath(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++)a=a[ks[i]];a[ks[ks.length-1]]=v}
 function deepMerge(base,v){
@@ -30,18 +30,18 @@ function deepMerge(base,v){
 }
 const lines=t=>String(t||"").split("\n").map(x=>x.trim()).filter(Boolean);
 const num=v=>{if(v==null||String(v).trim()==="")return null;const n=parseFloat(String(v).replace(",","."));return Number.isFinite(n)?n:null};
-const fmt=(n,d=2)=>n==null||!Number.isFinite(n)?"n/a":Number(n.toFixed(d)).toLocaleString("en-GB",{maximumFractionDigits:d});
-const fmtP=p=>p==null||!Number.isFinite(p)?"n/a":p<0.001?"< 0.001":fmt(p,3);
+const fmt=(n,d=2)=>n==null||!Number.isFinite(n)?_t("n/a"):Number(n.toFixed(d)).toLocaleString(uiLocale(),{maximumFractionDigits:d});
+const fmtP=p=>p==null||!Number.isFinite(p)?_t("n/a"):p<0.001?"< 0.001":fmt(p,3);
 const filled=(rs,keys)=>rs.filter(r=>keys.every(k=>String(r[k]??"").trim()));
 const trunc=(t,n)=>{t=String(t||"");return t.length>n?t.slice(0,n-1)+"…":t};
 
 /* ================= storage (implemented by the vault, see vault.js and app.js) ================= */
 const pending=new Map(),inflight=new Set();
-function scheduleSave(p){p.updated=new Date().toISOString();setSaveState("Unsaved changes");clearTimeout(pending.get(p.id));pending.set(p.id,setTimeout(()=>flush(p),900))}
+function scheduleSave(p){p.updated=new Date().toISOString();setSaveState(_t("Unsaved changes"));clearTimeout(pending.get(p.id));pending.set(p.id,setTimeout(()=>flush(p),900))}
 async function flush(p){
   if(inflight.has(p.id)){pending.set(p.id,setTimeout(()=>flush(p),500));return}
   inflight.add(p.id);
-  try{await store.save(p);setSaveState("Saved")}catch(e){setSaveState("Not saved: "+(e&&e.message?e.message:"storage error"))}
+  try{await store.save(p);setSaveState(_t("Saved"))}catch(e){setSaveState((_t("Not saved: {x}",{x:e&&e.message?e.message:_t("storage error")})))}
   finally{inflight.delete(p.id)}
 }
 function setSaveState(t){const el=$("#saveState");if(el)el.textContent=t}
@@ -60,7 +60,7 @@ function stageStatus(p,id){const o=DEF[p.tool].order,i=o.indexOf(id),ci=o.indexO
 
 /* ================= statistics ================= */
 function parseNums(t){return String(t||"").split(/[\n;\t ]+/).map(s=>s.trim().replace(",",".")).filter(Boolean).map(Number).filter(Number.isFinite)}
-function parseGroups(t){return lines(t).map((l,i)=>{const m=l.match(/^([^:]*[A-Za-zÀ-ÿ][^:]*):(.*)$/);return m?{label:m[1].trim(),vals:parseNums(m[2])}:{label:"Row "+(i+1),vals:parseNums(l)}}).filter(g=>g.vals.length)}
+function parseGroups(t){return lines(t).map((l,i)=>{const m=l.match(/^([^:]*[A-Za-zÀ-ÿ][^:]*):(.*)$/);return m?{label:m[1].trim(),vals:parseNums(m[2])}:{label:(_t("Row {i}{x}",{i:i,x:1})),vals:parseNums(l)}}).filter(g=>g.vals.length)}
 function stats(x){
   const n=x.length;if(!n)return{n:0};
   const mean=x.reduce((a,b)=>a+b,0)/n,s=[...x].sort((a,b)=>a-b);
@@ -98,24 +98,61 @@ function imr(x){
 }
 
 /* ================= instant text checks ================= */
+/* Keywords for the quick text checks in each interface language (glossary sheet "Check keywords").
+   English always applies; the keywords of the selected language are checked as well. */
+const KW={
+ de:{sol:/(implementier|einführ|installier|kaufen|beschaff|neue[sn]? (system|tool|software|prozess)|mangel an|fehlt|müssen|muss |sollte|brauchen|automatisier)/iu,
+     cause:/(weil|aufgrund|wegen|verursacht durch|infolge|der grund)/iu,
+     blame:/(mitarbeiter\w*|personal|kollegen) (sind|ist) (nachlässig|faul|nicht)/iu,
+     time:/(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember|woche|monat|quartal|jahr|seit|pro (tag|woche|monat))/iu,
+     abs:/(null|100\s?%|beseitig|eliminier)/iu,
+     agree:/(team war sich einig|jeder weiß|abstimmung|konsens|wir (denken|glauben))/iu,
+     tool:/(neues system|neues tool|software)/iu,
+     weak:/(schwach|minus|risiko|abmilder|übernehm|kombinier)/iu},
+ fr:{sol:/(mettre en place|implément|introdui|install|achet|nouve(au|l|lle) (système|outil|logiciel|processus)|manque de|il faut|devrai|doit|automatis)/iu,
+     cause:/(parce que|à cause de|en raison de|dû à|due à|causé par|la raison)/iu,
+     blame:/(personnel|employés|collègues) (sont|est) (négligent|paresseu|ne )/iu,
+     time:/(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|semaine|mois|trimestre|année|\ban\b|depuis|par (jour|semaine|mois)|\bT[1-4]\b)/iu,
+     abs:/(zéro|100\s?%|élimin|supprim)/iu,
+     agree:/(l'équipe est d'accord|tout le monde sait|vote|consensus|nous pensons)/iu,
+     tool:/(nouveau système|nouvel outil|logiciel)/iu,
+     weak:/(faible|moins|risque|atténu|emprunt|combin)/iu},
+ it:{sol:/(implementa|introdur|install|comprar|acquist|nuov[oa] (sistema|strumento|software|processo)|mancanza di|manca |bisogna|occorre|serve |dovrebbe|deve |automatizz)/iu,
+     cause:/(perché|a causa di|dovut[oa] a|causat[oa] da|per via di|il motivo)/iu,
+     blame:/(personale|dipendenti|colleghi) (sono|è) (negligent|pigr|non )/iu,
+     time:/(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|settimana|mese|trimestre|anno|\bdal\b|da quando|al giorno|alla settimana|al mese|\b[TQ][1-4]\b)/iu,
+     abs:/(zero|100\s?%|eliminar|azzerar)/iu,
+     agree:/(il team concorda|lo sanno tutti|votazione|consenso|pensiamo|crediamo)/iu,
+     tool:/(nuovo sistema|nuovo strumento|software)/iu,
+     weak:/(debol|meno|rischio|mitigar|prendere da|combinar)/iu},
+ nl:{sol:/(implementer|invoeren|installer|kopen|aanschaf|nieuwe? (systeem|tool|software|proces)|gebrek aan|ontbreekt|moet|zou moeten|nodig|automatiser)/iu,
+     cause:/(omdat|doordat|vanwege|als gevolg van|veroorzaakt door|de reden)/iu,
+     blame:/(medewerkers|personeel|collega'?s) (zijn|is) (slordig|lui|niet)/iu,
+     time:/(januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december|week|maand|kwartaal|jaar|sinds|per (dag|week|maand)|\b[QK][1-4]\b)/iu,
+     abs:/(\bnul\b|100\s?%|elimin|uitbann)/iu,
+     agree:/(het team was het eens|iedereen weet|stemming|consensus|we denken)/iu,
+     tool:/(nieuw systeem|nieuwe tool|software)/iu,
+     weak:/(zwak|\bmin\b|risico|beperk|overnem|combiner)/iu}};
+const kwLang=(name,t)=>{const k=KW[I18N.lang];return !!(k&&k[name]&&k[name].test(String(t||"")))};
+
 const hasNum=t=>/\d/.test(t);
-const hasTime=t=>/\b(20\d\d|19\d\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|week|month|quarter|q[1-4]|year|since|per (day|week|month))/i.test(t);
-function checkProblem(t){
+const hasTime=t=>kwLang("time",t)||/\b(20\d\d|19\d\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|week|month|quarter|q[1-4]|year|since|per (day|week|month))/i.test(t);
+function checkProblem(t,noLen){
   const f=[];if(!String(t).trim())return f;
-  if(/\b(implement|introduc|install|buy|purchase|new (system|tool|software|process)|lack of|need(s)? (to|a|an)|should|must|automate)/i.test(t))f.push("Reads like a solution or a pre-decided fix. Describe the gap, not the remedy.");
-  if(/\b(because|due to|caused by|as a result of|the reason)\b/i.test(t))f.push("States a cause. Describe the symptom here; the analysis proves the cause.");
-  if(/\b(staff|people|employees|colleagues) (are|is) (careless|lazy|not)\b/i.test(t))f.push("Blames people. Point at the process, not the person.");
-  if(!hasNum(t))f.push("No magnitude. How big is the gap, in numbers?");
-  if(!hasTime(t))f.push("No timeframe. Since when, or over what period?");
-  if(t.trim().length<60)f.push("Very short. Cover what, where, when, how much and the impact.");
-  if(!f.length)f.push("✓ Passes the quick checks. Still test it with the sponsor.");
+  if(kwLang("sol",t)||/\b(implement|introduc|install|buy|purchase|new (system|tool|software|process)|lack of|need(s)? (to|a|an)|should|must|automate)/i.test(t))f.push(_t("Reads like a solution or a pre-decided fix. Describe the gap, not the remedy."));
+  if(kwLang("cause",t)||/\b(because|due to|caused by|as a result of|the reason)\b/i.test(t))f.push(_t("States a cause. Describe the symptom here; the analysis proves the cause."));
+  if(kwLang("blame",t)||/\b(staff|people|employees|colleagues) (are|is) (careless|lazy|not)\b/i.test(t))f.push(_t("Blames people. Point at the process, not the person."));
+  if(!hasNum(t))f.push(_t("No magnitude. How big is the gap, in numbers?"));
+  if(!hasTime(t))f.push(_t("No timeframe. Since when, or over what period?"));
+  if(!noLen&&t.trim().length<60)f.push(_t("Very short. Cover what, where, when, how much and the impact."));
+  if(!f.length)f.push(_t("✓ Passes the quick checks. Still test it with the sponsor."));
   return f;
 }
 function checkGoal(t){
   const f=[];if(!String(t).trim())return f;
-  if(!hasNum(t))f.push("Not measurable. State the target value.");
-  if(!hasTime(t))f.push("Not time-bound. Add a date.");
-  if(/\b(zero|100\s?%|eliminate)/i.test(t))f.push("Absolute targets rarely survive contact with data. Is this realistic?");
-  if(!f.length)f.push("✓ Measurable and time-bound. Check it uses the same metric as the baseline.");
+  if(!hasNum(t))f.push(_t("Not measurable. State the target value."));
+  if(!hasTime(t))f.push(_t("Not time-bound. Add a date."));
+  if(kwLang("abs",t)||/\b(zero|100\s?%|eliminate)/i.test(t))f.push(_t("Absolute targets rarely survive contact with data. Is this realistic?"));
+  if(!f.length)f.push(_t("✓ Measurable and time-bound. Check it uses the same metric as the baseline."));
   return f;
 }
