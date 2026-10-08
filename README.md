@@ -23,6 +23,8 @@ Above the projects sit two portfolio pages:
 
 **Export** (one button, several formats): PDF report, Excel workbook, Jira Cloud import file (CSV), agile backlog in Excel, and an email draft. Exports are one-way: once tasks are in Excel or Jira, they live there. An optional AI advisor suggests which method to start with and gives a strict black belt review of each stage.
 
+**Languages**: English (UK), Deutsch, Français, Italiano and Nederlands. Choose the language at the top right, also on the login screen; the switch is immediate and does not touch your data. Method names (DMAIC, A3, Kaizen, PDCA, 5S and so on) and standard acronyms stay in English. Everything is translated: screens, checks, explanations, PDF reports, Excel workbooks and the email draft. Jira column names stay in English because Jira expects them. German and French are marked as beta. The AI advisor and review answer in the language of your project text.
+
 ## Privacy in one paragraph
 
 There is no server and no account. Projects and settings, including any AI key, are encrypted in the browser with AES-GCM using a key protected by your passphrase. Nothing leaves your device unless you (a) connect an AI provider, in which case the text of your request goes directly to that provider, or (b) save a backup or synced file, which contains the same encrypted data.
@@ -86,7 +88,7 @@ No programming needed.
 
 ### Publishing an update
 
-Upload the changed files in the same way. Then open `sw.js`, change `VERSION` (for example to `lean-navigator-1.2.2`) and commit. Also update `APP_VERSION` at the top of `js/app.js`, which is the number shown in Settings. Users get the new version the next time they open the app while online.
+Upload the changed files in the same way. Then open `sw.js`, change `VERSION` (for example to `lean-navigator-1.3.1`) and commit. Also update `APP_VERSION` at the top of `js/app.js`, which is the number shown in Settings. Users get the new version the next time they open the app while online.
 
 ### Running it on your own computer
 
@@ -104,6 +106,8 @@ and open `http://localhost:8000`.
 index.html              page shell
 css/app.css             styles (palette: blue #0C2145, gold #C3B598, cream #FFFCF0; typeface Jost)
 fonts/                  Jost typeface (woff2) and its licence
+js/i18n.js              interface language, switching without reload
+i18n/                   translations (de, fr, it, nl), generated from the reviewed translation file
 js/core.js              registry, helpers, statistics
 js/charts.js            SVG charts shared by screen and PDF
 js/ui.js                library, advisor, project workspace, checkpoints, review
