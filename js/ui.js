@@ -19,7 +19,7 @@ function renderHome(){
         <div class="filters" role="group" aria-label="${_t("Filter by status")}">${[["all",_t("All")],["ongoing",_t("Ongoing")],["onhold",_t("On hold")],["closed",_t("Closed")]].map(([k,l])=>`<button class="chip" data-f="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join("")}</div>
         <ul class="plist" id="plist"></ul>
         <div class="direct"><label for="directTool" class="small muted">${_t("Already know the method? Start directly:")}</label>
-          <div style="display:flex;gap:8px;margin-top:4px"><select id="directTool">${BUILT().map(t=>`<option>${t}</option>`).join("")}</select><button class="btn alt" id="skip">${_t("Start")}</button></div></div>
+          <div style="display:flex;gap:8px;margin-top:4px"><select id="directTool">${BUILT().map(t=>`<option>${t}</option>`).join("")}</select><button class="btn alt" id="skip">${_tc("verb","Start")}</button></div></div>
       </div>
     </section>
   </div>`;
@@ -99,17 +99,17 @@ function openProject(id){const p=S.projects.find(x=>x.id===id);ensureModel(p);S.
 /* ================= project view ================= */
 function renderProject(){
   const p=S.current;if(!p){S.view="home";return render()}
-  const d=DEF[p.tool];
+  const d=DEF[p.tool],solo=p.tool==="Just do it";if(solo)S.pview="method";
   $("#app").innerHTML=`
   <div class="proj-head">
     <input class="title-input" id="ptitle" value="${esc(p.title)}" aria-label="${_t("Project title")}">
     <select id="pstatus" aria-label="${_t("Project status")}">${Object.entries(STATUSES).map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select>
-    ${d?exportMenuHTML():""}
+    ${d?exportMenuHTML(p):""}
     <button class="btn alt" id="del">${_t("Delete")}</button>
     <div style="flex-basis:100%" class="small muted">${_t("{tool}, created {created}.",{tool:esc(p.tool),created:fmtDate(p.created)})} <span id="saveState" class="save-state">${_t("Saved")}</span></div>
     ${allPriorities().length?`<div class="slink small"><label for="plink">${_t("Serves strategic priority")}</label>${priSelect(p.hoshinLink,'id="plink"')}</div>`:""}
   </div>
-  ${d?`<div class="pviews" role="tablist" aria-label="${_t("Project views")}">${[["method",esc(p.tool)],["plan",_t("Plan and Gantt")],["stakeholders",_t("Stakeholders")],["raci","RACI"]].map(([k,l])=>`<button class="pv" role="tab" data-pv="${k}" aria-selected="${S.pview===k}">${l}</button>`).join("")}</div>`:""}
+  ${d&&!solo?`<div class="pviews" role="tablist" aria-label="${_t("Project views")}">${[["method",esc(p.tool)],["plan",_t("Plan and Gantt")],["stakeholders",_t("Stakeholders")],["raci","RACI"]].map(([k,l])=>`<button class="pv" role="tab" data-pv="${k}" aria-selected="${S.pview===k}">${l}</button>`).join("")}</div>`:""}
   ${d&&S.pview!=="method"?`<div class="sheet solo" id="pvSheet"></div>`:""}
   ${d&&S.pview==="method"?`<div class="rail" style="grid-template-columns:repeat(${d.order.length},1fr)" role="tablist" aria-label="${_t("{tool} stages",{tool:esc(p.tool)})}">
     ${d.order.map((k,i)=>{const ci=d.order.indexOf(p.phase),st=stageStatus(p,k),done=st==="Passed"||st==="Completed";
@@ -187,7 +187,7 @@ function renderSheet(){
   S.refresh=null;let h="";
   if(prev&&o.indexOf(id)>o.indexOf(p.phase)&&S.tab!=="tollgate")h+=`<div class="banner">${_t("You are working ahead of the {x} {x2}. Allowed, but everything here rests on an unapproved {x3} stage.",{x:ST[prev].name,x2:DEF[p.tool].gate,x3:ST[prev].name})}</div>`;
   h+=infoBlock(S.tab==="tollgate"?"gate."+p.tool:id+"."+S.tab);
-  if(S.tab==="tollgate"){el.innerHTML=h+tollgateHTML(id)+(id==="vV"?`<div id="dvSuggest"></div>`:"");bindTollgate(el,id);bind(el);if(id==="vV")dvSuggestion(p);return}
+  if(S.tab==="tollgate"){el.innerHTML=h+tollgateHTML(id)+(id==="vV"?`<div id="dvSuggest"></div>`:"")+jdiPanelHTML(p);bindTollgate(el,id);bind(el);bindJdiPanel(p);if(id==="vV")dvSuggestion(p);return}
   h+=(TABS[id][S.tab]||(()=>""))(p);
   el.innerHTML=h;
   const after=AFTER[id+"."+S.tab];if(after)after(p);
@@ -245,20 +245,22 @@ function renderCoach(){
   el.innerHTML=`<p class="small muted" style="margin-top:0">${_t("A strict review of your {x} work before the {x2}. It will not be polite about weak points.",{x:ST[id].name,x2:DEF[S.current.tool].gate})}</p>
     <button class="btn hot" id="review" ${S.coachBusy?"disabled":""}>${S.coachBusy?_t("Reviewing…"):(_t("Review {x}",{x:ST[id].name}))}</button>
     ${c?`<div style="margin-top:16px"><div class="verdict">${c.verdict==="ready"?_t("Ready to pass"):_t("Rework before passing")}</div>${c.summary?`<p class="small">${esc(c.summary)}</p>`:""}
-    ${c.issues.map(i=>`<div class="issue ${esc(i.severity)}"><b>${esc(i.field)}</b>${esc(i.issue)}<div class="small muted">${esc(i.suggestion)}</div></div>`).join("")}</div>`:""}`;
+    ${c.issues.map(i=>`<div class="issue ${esc(i.severity)}"><b>${esc(i.field)}</b>${esc(i.issue)}<div class="small muted">${esc(i.suggestion)}</div></div>`).join("")}</div>`:""}
+    ${c&&c.verdict==="ready"&&jdiCandidates(S.current).length?`<div class="jdi-hint"><p class="small">${_t("<b>This project would benefit from Just do it.</b> Some items are quick, low-risk fixes with a known cause.")}</p><button class="btn alt" id="goJdi">${_t("Go to Just do it")}</button></div>`:""}`;
   $("#review").onclick=review;
+  const gj=$("#goJdi");if(gj)gj.onclick=()=>{S.tab="tollgate";renderProject();setTimeout(()=>{const x=$("#jdiPanel");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},60)};
 }
 async function review(){
-  const p=S.current,id=S.stage;S.coachBusy=true;renderCoach();
+  const p=S.current,id=S.stage,short=p.tool==="Just do it";S.coachBusy=true;renderCoach();
   const prompt=aiLangRule()+"\n\n"+`You are a Lean Six Sigma Master Black Belt with 30 years of experience reviewing the "${ST[id].name}" stage of a ${p.tool} project before its ${DEF[p.tool].gate.toLowerCase()}. Be strict, specific and constructive. No flattery. Point at concrete content. Check: ${ST[id].focus} Empty sections are issues. Use British English, or Italian if the content is in Italian.
 
 Project data (JSON):
 ${JSON.stringify(stageData(p,id))}
 
 Respond with ONLY JSON:
-{"verdict":"ready" or "rework","summary":"max 40 words","issues":[{"field":"which part","severity":"high|medium|low","issue":"max 30 words","suggestion":"max 30 words"}]}
-At most 8 issues, most severe first.`;
-  try{const r=await sample.json(prompt);S.coach[p.id+id]={verdict:r.verdict==="ready"?"ready":"rework",summary:r.summary||"",issues:Array.isArray(r.issues)?r.issues.slice(0,8):[]}}
+{"verdict":"ready" or "rework","summary":"max ${short?25:40} words","issues":[{"field":"which part","severity":"high|medium|low","issue":"max 30 words","suggestion":"max 30 words"}]}
+At most ${short?3:8} issues, most severe first.${short?" This is a small fix: keep the review short and raise only what really matters.":""}`;
+  try{const r=await sample.json(prompt);S.coach[p.id+id]={verdict:r.verdict==="ready"?"ready":"rework",summary:r.summary||"",issues:Array.isArray(r.issues)?r.issues.slice(0,short?3:8):[]}}
   catch(e){toast((_t("The review failed: {x}",{x:e&&e.message?e.message:_t("unknown error")})))}
   finally{S.coachBusy=false;if(S.stage===id)renderCoach()}
 }

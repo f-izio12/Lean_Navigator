@@ -6,8 +6,8 @@ var EXPORTS=[
   {id:"agile",label:_t("Agile backlog (Excel)"),note:_t("Epic, story and sub-task rows with IDs, to copy into any agile tool."),plan:true},
   {id:"mail",label:_t("Email draft"),note:_t("Opens your email program with a summary. Attach the PDF yourself: browsers cannot attach files to an email.")}
 ];
-var exportMenuHTML=()=>`<div class="menu"><button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false">${_t("Export ▾")}</button>
-  <div class="menu-list" id="exportList" role="menu" hidden>${EXPORTS.map(e=>`<button role="menuitem" data-ex="${esc(e.id)}"><b>${e.label}</b><span>${e.note}</span></button>`).join("")}</div></div>`;
+var exportMenuHTML=p=>`<div class="menu"><button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false">${_t("Export ▾")}</button>
+  <div class="menu-list" id="exportList" role="menu" hidden>${EXPORTS.filter(e=>!(e.plan&&p&&p.tool==="Just do it")).map(e=>`<button role="menuitem" data-ex="${esc(e.id)}"><b>${e.label}</b><span>${e.note}</span></button>`).join("")}</div></div>`;
 function bindExportMenu(p){
   const b=$("#exportBtn"),l=$("#exportList"),close=()=>{l.hidden=true;b.setAttribute("aria-expanded","false")};
   b.onclick=e=>{e.stopPropagation();l.hidden=!l.hidden;b.setAttribute("aria-expanded",String(!l.hidden))};
@@ -25,7 +25,8 @@ async function saveBlob(name,blob){await downloads.save({filename:name,data:blob
 
 /* ----- Excel workbook ----- */
 var HUMAN={s:_t("Suppliers"),i:_t("Inputs"),p:_t("Process"),o:_t("Outputs"),c:"Customers",ct:_t("Cycle time"),co:_t("Changeover"),pca:_t("% complete and accurate"),ops:_t("People"),w1:_t("Why 1"),w2:_t("Why 2"),w3:_t("Why 3"),w4:_t("Why 4"),w5:_t("Why 5"),grr:_t("%GRR"),ndc:_t("Distinct categories"),lsl:_t("Lower spec limit"),usl:_t("Upper spec limit"),msa:_t("Measurement system"),voc:_t("Voice of the customer"),fmea:"FMEA",ctq:"CTQ",spec:_t("Specification / target"),x1:_t("Events A"),n1:_t("Sample A"),x2:_t("Events B"),n2:_t("Sample B"),la:_t("Name A"),lb:_t("Name B"),a:_t("Values A"),b:_t("Values B")};
-var human=k=>HUMAN[k]||String(k).replace(/([A-Z])/g," $1").replace(/^./,c=>c.toUpperCase()).trim();
+var XLSXVIEW={}; /* optional readable view of a stage for the Excel export, by stage key */
+var human=k=>HUMAN[k]||(/\s/.test(k)?k:null)||String(k).replace(/([A-Z])/g," $1").replace(/^./,c=>c.toUpperCase()).trim();
 function styleHead(row){row.eachCell(c=>{c.font={bold:true,color:{argb:"FFFFFFFF"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0C2145"}};c.alignment={vertical:"middle",wrapText:true}})}
 function sheetName(wb,n){n=String(n).replace(/[\\/?*[\]:]/g," ").slice(0,31);let k=n,i=2;while(wb.getWorksheet(k))k=(n.slice(0,28)+" "+i++);return k}
 function writeObject(ws,obj,prefix=""){
@@ -35,7 +36,7 @@ function writeObject(ws,obj,prefix=""){
   objs.forEach(([k,v])=>{ws.addRow([]);const h=ws.addRow([human(k)]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};writeObject(ws,v)});
   arrs.forEach(([k,v])=>{ws.addRow([]);const h=ws.addRow([human(k)]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};
     const rowsF=v.filter(r=>r&&typeof r==="object"&&Object.values(r).some(x=>String(x??"").trim()));if(!rowsF.length){ws.addRow([_t("Nothing recorded")]);return}
-    const keys=Object.keys(rowsF[0]).filter(x=>typeof rowsF[0][x]!=="object");styleHead(ws.addRow(keys.map(human)));rowsF.forEach(r=>{const rr=ws.addRow(keys.map(x=>_tv(r[x])??""));rr.alignment={wrapText:true,vertical:"top"}})});
+    const keys=Object.keys(rowsF[0]).filter(x=>typeof rowsF[0][x]!=="object"&&!x.startsWith("_"));styleHead(ws.addRow(keys.map(human)));rowsF.forEach(r=>{const rr=ws.addRow(keys.map(x=>_tv(r[x])??""));rr.alignment={wrapText:true,vertical:"top"}})});
 }
 function planSheet(wb,p,name=_t("Plan")){
   const ws=wb.addWorksheet(name,{views:[{state:"frozen",xSplit:3,ySplit:1}]}),{tree}=planDates(p);
@@ -60,7 +61,7 @@ async function exportXLSX(p){
   const cv=COVER[p.tool](p);[[_t("Method"),p.tool],[_t("Status"),STATUSES[p.status]],[_t("Current stage"),ST[p.phase].name],[_t("Created"),fmtDate(p.created)],[_t("Last updated"),fmtDate(p.updated)],[_t("Exported"),fmtDate(new Date().toISOString())],...cv.people,...cv.summary].forEach(([k,v])=>{const r=sum.addRow([k,v??""]);r.getCell(1).font={bold:true};r.getCell(2).alignment={wrapText:true,vertical:"top"}});
   sum.addRow([]);styleHead(sum.addRow([_t("Stage"),_t("Status / decision")]));DEF[p.tool].order.forEach(k=>sum.addRow([ST[k].name,`${_tv(stageStatus(p,k))}${tgOf(p,k).decision?(_t(", decision: {decision}",{decision:tgOf(p,k).decision})):""}`]));
   for(const k of DEF[p.tool].order){const ws=wb.addWorksheet(sheetName(wb,ST[k].name));ws.getColumn(1).width=30;for(let i=2;i<=10;i++)ws.getColumn(i).width=24;
-    writeObject(ws,p[ST[k].key]);const tg=tgOf(p,k);ws.addRow([]);const h=ws.addRow([DEF[p.tool].gate]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};
+    writeObject(ws,XLSXVIEW[ST[k].key]?XLSXVIEW[ST[k].key](p):p[ST[k].key]);const tg=tgOf(p,k);ws.addRow([]);const h=ws.addRow([DEF[p.tool].gate]);h.getCell(1).font={bold:true,size:12,color:{argb:"FF7A6A3E"}};
     ST[k].tg.forEach(([c,l])=>ws.addRow([l,tg.checks[c]?_t("Yes"):_t("No")]));ws.addRow([_t("Decision"),tg.decision||""]);ws.addRow([_t("Notes"),tg.notes||""])}
   if(p.plan.items.length)planSheet(wb,p);
   const st=p.people.stakeholders.filter(s=>s.name);

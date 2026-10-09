@@ -216,7 +216,7 @@ PDFSEC.s5=async(H,p)=>{const s=p.fsustain;H.h2(_t("Audits"));H.kv([[_t("Rhythm a
 
 /* ================= export & email ================= */
 const slug=t=>String(t||"project").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)||"project";
-const toolSlug={"DMAIC":"dmaic","A3 problem solving":"a3","Kaizen event":"kaizen","Value stream mapping":"vsm","DMADV":"dmadv","PDCA":"pdca","5S":"5s"};
+const toolSlug={"DMAIC":"dmaic","A3 problem solving":"a3","Kaizen event":"kaizen","Value stream mapping":"vsm","DMADV":"dmadv","PDCA":"pdca","5S":"5s","Just do it":"jdi"};
 async function exportPDF(p){
   if(!window.jspdf||!window.jspdf.jsPDF){toast(_t("The PDF library did not load. Reload the page and try again."));return}
   if(!downloads){toast(_t("Saving files isn't available in this view."));return}

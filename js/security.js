@@ -23,7 +23,7 @@ function sanitizeState(st){
     for(const k of Object.keys(o)){const v=o[k];
       if(k==="id"&&typeof v==="string"&&!okId(v))o[k]=uidGen();
       else if(["deps","links","supports"].includes(k)&&Array.isArray(v))o[k]=cleanIds(v);
-      else if(["parent","hoshinLink","projectId","ideaId","link","datum","selected"].includes(k)&&typeof v==="string"&&v&&!okId(v))o[k]="";
+      else if(["parent","hoshinLink","projectId","ideaId","link","datum","selected","_jdi"].includes(k)&&typeof v==="string"&&v&&!okId(v))o[k]="";
       else if(k==="cells"||k==="pugh"||k==="hoq"||k==="predicted"||k==="actual"){if(v&&typeof v==="object")for(const kk of Object.keys(v))if(!/^[A-Za-z0-9_:|-]{1,140}$/.test(kk))delete v[kk];walk(v)}
       else walk(v)}};
   walk(st);

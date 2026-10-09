@@ -105,7 +105,14 @@ function renderPlanView(el){
   const save=()=>{scheduleSave(p)};
   el.querySelectorAll("[data-pi]").forEach(i=>{const r=p.plan.items.find(x=>x.id===i.dataset.pi),k=i.dataset.k;
     if(k==="deps")i.addEventListener("change",()=>{const {ids,bad}=parseDeps(p,i.value,r.id);r.deps=ids;save();renderPlanView(el);if(bad.length)toast(`${_t("Unknown or invalid code: {x}",{x:bad.join(", ")})}`)});
-    else if(i.type==="date")i.addEventListener("change",()=>{r[k]=i.value;save();renderPlanView(el)});
+    else if(i.type==="date"){
+      /* Browsers fire "change" after every digit of the year (0002, 0020, 0202, 2026). Redrawing the table then replaced
+         the field while the year was being typed. Save only complete dates and redraw the table when the field is left. */
+      i.addEventListener("change",()=>{const v=i.value;if(v&&!(+v.slice(0,4)>=1900))return;r[k]=v;save();el._planDirty=true;
+        const g=$("#gantt");if(g)g.innerHTML=ganttSVG(p)||"";const pf=$("#planFlags");if(pf){const {issues}=planIssues(p);pf.innerHTML=flagsHTML(issues.length?issues:[_t("✓ Dates and dependencies are consistent.")])}});
+      i.addEventListener("blur",()=>setTimeout(()=>{if(!el._planDirty||!el.isConnected)return;el._planDirty=false;
+        const a=document.activeElement,pi=a&&a.dataset?a.dataset.pi:null,ak=a&&a.dataset?a.dataset.k:null;renderPlanView(el);
+        if(pi){const n=[...el.querySelectorAll("[data-pi]")].find(x=>x.dataset.pi===pi&&x.dataset.k===ak);if(n)n.focus()}},0))}
     else i.addEventListener("input",()=>{r[k]=i.value;save();if(k==="title"){const gEl=$("#gantt");clearTimeout(i._t);i._t=setTimeout(()=>{gEl.innerHTML=ganttSVG(p)||""},400)}})});
   const add=(type,parent)=>{p.plan.items.push({id:uidGen(),type,parent:parent||null,title:"",desc:"",owner:"",start:"",end:"",deps:[]});save();renderPlanView(el)};
   $("#addWP").onclick=()=>add("wp");$("#addMS").onclick=()=>add("ms");

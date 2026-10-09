@@ -287,6 +287,18 @@ table.bowl input{width:58px;min-width:58px;padding:4px}table.bowl td.ok{backgrou
   :root:not([data-theme="light"]) .msg.user,:root:not([data-theme="light"]) .chip[aria-pressed="true"],:root:not([data-theme="light"]) .idea .score{background:#1F3A6B}
   :root:not([data-theme="light"]) table.grid th,:root:not([data-theme="light"]) .sipoc .col h3{background:#06122A}
 }
+/* Just do it */
+.jdi-panel{margin-top:22px;padding:14px 16px;border:1px solid var(--line);border-left:4px solid var(--accent2)}
+.jdi-panel h3{margin-top:0}
+.jdi-panel ul{margin:8px 0 12px;padding-left:18px}
+.jdi-panel li{margin:6px 0}
+.jdi-panel li .btn{margin-left:8px}
+.jdi-hint{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+table.jdq td{vertical-align:middle}
+table.jdq select{width:100%}
+#jdEsc p{margin:10px 0 8px}
+#jdEsc .btn{margin-bottom:18px}
+.grid3.jd-ev{align-items:end}
 
 .langsel{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);padding:5px 8px;font:inherit;cursor:pointer}
 .langsel option{color:#0C2145;background:#fff}

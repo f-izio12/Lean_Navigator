@@ -20,7 +20,7 @@ function _t(k,p){
 const _tv=v=>typeof v==="string"&&v?_t(v):v;
 /* Switching language without reloading the page: the files that define labels when they load
    are run again with the new language. The vault stays unlocked and no data is touched. */
-const I18N_RELOAD=["charts.js","dmaic.js","hyp.js","a3.js","kaizen.js","vsm.js","dmadv.js","pdca.js","fives.js","info.js","plan.js","people.js","export.js","portfolio.js","hoshin.js","ai.js"];
+const I18N_RELOAD=["charts.js","dmaic.js","hyp.js","a3.js","kaizen.js","vsm.js","dmadv.js","pdca.js","fives.js","info.js","plan.js","people.js","export.js","portfolio.js","hoshin.js","jdi.js","ai.js"];
 async function setLanguage(l){
   if(!((I18N_DEV&&l==="xx")||LANGS.some(x=>x[0]===l))||l===I18N.lang)return;
   try{localStorage.setItem("leanNavigator.lang",l)}catch{}

@@ -10,7 +10,7 @@ if((()=>{try{return window.top!==window.self}catch{return true}})()){
   throw new Error(_t("Lean Navigator refused to run inside a frame."));
 }
 /* ================= App shell: vault screens, settings, storage, start-up ================= */
-const APP_VERSION="1.3.0";
+const APP_VERSION="1.3.1";
 let saveChain=Promise.resolve();
 function persistAll(){saveChain=saveChain.then(async()=>{Vault.state.projects=S.projects;await Vault.seal();if(Vault.fileHandle&&Vault.fileOk)Vault.dirty=false;updateBanner();updateSaveBar()});return saveChain}
 const _scheduleSave=scheduleSave;scheduleSave=function(p){Vault.dirty=true;_scheduleSave(p);updateSaveBar()};
@@ -115,7 +115,9 @@ async function doUnlock(secret,byCode,errEl,btn){
 async function enterApp(){
   sanitizeState(Vault.state);
   S.projects=(Vault.state.projects||[]).map(ensureModel);S.view="home";S.current=null;S.coach={};
-  sample=makeAI(Vault.state.settings.ai);nav(true);render();
+  sample=makeAI(Vault.state.settings.ai);nav(true);
+  try{const n=await migrateJDILog();if(n){await persistAll();toast(`${_t("{n} item(s) from the Just do it log are now Just do it projects.",{n:n})}`)}}catch(e){console.error(e)}
+  render();
   try{if(navigator.storage&&navigator.storage.persist&&!(await navigator.storage.persisted()))await navigator.storage.persist()}catch{}
 }
 async function lockNow(){await persistAll().catch(()=>{});Vault.lock();S.projects=[];S.current=null;sample=null;showUnlock()}

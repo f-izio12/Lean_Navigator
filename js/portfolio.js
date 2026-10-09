@@ -18,10 +18,11 @@ var ideaScore=x=>{const b=num(x.benefit)||0,e=num(x.effort)||0;return b&&e?b*(6-
 function renderPipeline(){
   const pf=PF(),tab=S.pipeTab||"ideas",flt=S.pipeFilter||"open";
   const open=x=>["New","Under review"].includes(x.status);
+  const jdOpen=jdiProjects().filter(p=>p.status!=="closed"&&p.jdo.done!=="Yes").length;
   const list=pf.ideas.filter(x=>flt==="all"||(flt==="open"?open(x):x.status===flt)).sort((a,b)=>(!a.title.trim()-!b.title.trim())*-1||ideaScore(b)-ideaScore(a));
   $("#app").innerHTML=`<div class="proj-head"><h2>${_t("Pipeline")}</h2><span class="muted small">${_t("Collect improvement ideas, score them, and decide: start a project, just do it, park or reject.")}</span>
     <div style="margin-left:auto" class="row"><button class="btn" id="addIdea">${_t("Add idea")}</button><button class="btn alt" id="pipeXlsx">${_t("Export to Excel")}</button></div></div>
-   <div class="pviews">${[["ideas",`${_t("Ideas ({x} open)",{x:pf.ideas.filter(open).length})}`],["jdi",_t("Just do it log ({x} open)",{x:pf.jdi.filter(j=>j.done!=="Yes").length})]].map(([k,l])=>`<button class="pv" data-ptab="${k}" aria-selected="${tab===k}">${l}</button>`).join("")}</div>
+   <div class="pviews">${[["ideas",`${_t("Ideas ({x} open)",{x:pf.ideas.filter(open).length})}`],["jdi",`${_t("Just do it ({jdOpen} open)",{jdOpen:jdOpen})}`]].map(([k,l])=>`<button class="pv" data-ptab="${k}" aria-selected="${tab===k}">${l}</button>`).join("")}</div>
    <div class="sheet solo" id="pipeSheet"></div>`;
   $("#addIdea").onclick=()=>{pf.ideas.unshift({id:uidGen(),title:"",problem:"",proposer:"",added:new Date().toISOString().slice(0,10),benefit:"3",effort:"3",link:"",status:"New",note:"",projectId:""});S.pipeTab="ideas";S.pipeFilter="open";savePF();renderPipeline();setTimeout(()=>document.querySelector(".idea input")?.focus())};
   $("#pipeXlsx").onclick=()=>exportPipeline().catch(e=>toast((_t("Export failed: {message}",{message:e.message}))));
@@ -51,7 +52,8 @@ async function ideaAction(x,act,card){
   if(act==="reopen"){x.status="Under review";x.note="";savePF();return renderPipeline()}
   if(act==="park"||act==="reject"){const r=prompt(act==="park"?_t("Why park it, and when to look again?"):_t("Why reject it? (helps the proposer understand)"));if(r===null)return;x.status=act==="park"?"Parked":"Rejected";x.note=r;savePF();return renderPipeline()}
   if(act==="jdi"){if((num(x.effort)||0)>=4&&!confirm(_t("Effort is high for a Just do it. Continue anyway?")))return;
-    pf.jdi.unshift({id:uidGen(),what:x.title||x.problem,owner:"",due:"",done:"No",result:"",ideaId:x.id,link:x.link});x.status="Just do it";savePF();S.pipeTab="jdi";toast(_t("Moved to the Just do it log."));return renderPipeline()}
+    if(!x.title.trim()&&!x.problem.trim()){toast(_t("Give the idea a title first."));return}
+    const q=await newJDI({title:trunc(x.title||x.problem,80),problem:x.problem,what:x.title,ideaId:x.id,link:x.link});x.status="Just do it";x.projectId=q.id;savePF();toast(_t("Just do it project started."));return openProject(q.id)}
   if(act==="start"){const m=card.querySelector("[data-start]").value;if(!m){toast(_t("Choose a method, or ask the advisor."));return}
     if(!x.title.trim()){toast(_t("Give the idea a title first."));return}
     if(m==="__advisor"){S.pendingIdea=x.id;S.view="home";S.chat=[];render();$("#inp").value=`${x.title}. ${x.problem}`.trim();$("#inp").focus();toast(_t("Describe more if you can, then press Send."));return}
@@ -61,29 +63,34 @@ async function ideaAction(x,act,card){
 function linkIdeaToProject(p){const id=S.pendingIdea;S.pendingIdea=null;if(!id)return;const x=PF().ideas.find(i=>i.id===id);if(!x)return;
   x.status="Started";x.projectId=p.id;p.hoshinLink=x.link||"";if(x.problem&&!p.advisorNotes)p.advisorNotes=(_t("From the pipeline: {problem}",{problem:x.problem}));savePF()}
 
-/* ================= Just do it log ================= */
+/* ================= Just do it projects ================= */
+var jdiProjects=()=>S.projects.filter(p=>p.tool==="Just do it"&&p.jdo).sort((a,b)=>(a.status==="closed")-(b.status==="closed")||String(a.jdo.due||"9").localeCompare(String(b.jdo.due||"9")));
 function renderJDI(el){
-  const pf=PF(),today=new Date().toISOString().slice(0,10);
-  el.innerHTML=infoBlock("pf.jdi")+`<div class="wide"><table class="grid"><thead><tr><th>${_t("What")}</th><th style="width:150px">${_t("Owner")}</th><th style="width:150px">${_t("Due")}</th><th style="width:90px">${_t("Done")}</th><th>${_t("Result")}</th><th style="width:40px"></th></tr></thead><tbody>
-   ${pf.jdi.map((j,i)=>`<tr data-j="${i}" class="${j.done!=="Yes"&&j.due&&j.due<today?"late":""}"><td><textarea data-o="what">${esc(j.what)}</textarea></td><td><input data-o="owner" value="${esc(j.owner)}"></td><td><input type="date" data-o="due" value="${esc(j.due)}"></td><td><select data-o="done">${["No","Yes"].map(v=>`<option value="${esc(v)}" ${v===j.done?"selected":""}>${esc(_tv(v))}</option>`).join("")}</select></td><td><textarea data-o="result">${esc(j.result)}</textarea></td><td><button class="x" data-jdel="${i}" aria-label="${_t("Remove")}">×</button></td></tr>`).join("")||`<tr><td colspan="6" class="muted">${_t("Nothing in the log yet.")}</td></tr>`}
-   </tbody></table></div><button class="btn alt addrow" id="addJ">${_t("Add item")}</button><div class="flags" id="jF"></div>`;
-  const flags=()=>{const open=pf.jdi.filter(j=>j.done!=="Yes"),late=open.filter(j=>j.due&&j.due<today),noOwn=open.filter(j=>!j.owner.trim()),f=[];
-    if(late.length)f.push(`${_t("{lateCount} item(s) past the due date. A Just do it that waits weeks is not quick: finish it, or move it back to the pipeline.",{lateCount:late.length})}`);
-    if(noOwn.length)f.push(`${_t("{noOwnCount} item(s) without an owner.",{noOwnCount:noOwn.length})}`);if(pf.jdi.length&&!f.length)f.push(`✓ ${pf.jdi.filter(j=>j.done==="Yes").length} of ${pf.jdi.length} done, nothing overdue.`);$("#jF").innerHTML=flagsHTML(f)};
-  el.querySelectorAll("tr[data-j]").forEach(tr=>bindRoot(tr,pf.jdi[+tr.dataset.j],flags));
-  el.querySelectorAll("[data-jdel]").forEach(b=>b.onclick=()=>{pf.jdi.splice(+b.dataset.jdel,1);savePF();renderJDI(el)});
-  $("#addJ").onclick=()=>{pf.jdi.unshift({id:uidGen(),what:"",owner:"",due:"",done:"No",result:"",ideaId:"",link:""});savePF();renderJDI(el)};
-  flags();bind(el);
+  const l=jdiProjects(),today=new Date().toISOString().slice(0,10);
+  el.innerHTML=infoBlock("pf.jdi")+`<div class="wide"><table class="grid"><thead><tr><th>${_t("Just do it")}</th><th style="width:150px">${_t("Owner")}</th><th style="width:110px">${_t("Due")}</th><th style="width:70px">${_t("Done")}</th><th style="width:120px">${_t("Before / after")}</th><th>${_t("Part of")}</th><th style="width:100px">${_t("Status")}</th></tr></thead><tbody>
+   ${l.map(p=>{const j=p.jdo,late=j.done!=="Yes"&&p.status!=="closed"&&j.due&&j.due<today;return `<tr class="${late?"late":""}"><td><button class="btn link" data-jop="${esc(p.id)}">${esc(p.title)}</button>${j.what&&j.what!==p.title?`<div class="small muted">${esc(trunc(j.what,90))}</div>`:""}</td><td>${esc(j.owner)}</td><td>${j.due?fmtDate(j.due):""}</td><td>${esc(jdV(j.done))}</td><td>${j.before||j.after?`${esc(j.before||"-")} / ${esc(j.after||"-")}`:""}</td><td>${j.parent&&j.parent.title?`${esc(j.parent.title)} <span class="small muted">(${esc(j.parent.tool)})</span>`:""}</td><td>${esc(STATUSES[p.status])}</td></tr>`}).join("")||`<tr><td colspan="7" class="muted">${_t("No Just do its yet.")}</td></tr>`}
+   </tbody></table></div><button class="btn alt addrow" id="addJ">${_t("New Just do it")}</button><div class="flags" id="jF"></div>`;
+  const open=l.filter(p=>p.status!=="closed"&&p.jdo.done!=="Yes"),late=open.filter(p=>p.jdo.due&&p.jdo.due<today),noOwn=open.filter(p=>!p.jdo.owner.trim()),noAfter=l.filter(p=>p.jdo.done==="Yes"&&!String(p.jdo.after).trim()),f=[];
+  if(late.length)f.push(`${_t("{lateCount} Just do it(s) past the due date. A Just do it that waits weeks is not quick: finish it, or move it to PDCA or A3.",{lateCount:late.length})}`);
+  if(noOwn.length)f.push(`${_t("{noOwnCount} open Just do it(s) without an owner.",{noOwnCount:noOwn.length})}`);
+  if(noAfter.length)f.push(`${_t("{noAfterCount} marked done without an after value. Done means the problem went away.",{noAfterCount:noAfter.length})}`);
+  if(l.length&&!f.length)f.push(`✓ ${l.filter(p=>p.jdo.done==="Yes").length} of ${l.length} done, nothing overdue.`);
+  $("#jF").innerHTML=flagsHTML(f);
+  el.querySelectorAll("[data-jop]").forEach(b=>b.onclick=()=>openProject(b.dataset.jop));
+  $("#addJ").onclick=async()=>{const q=await newJDI({});openProject(q.id)};
+  bind(el);
 }
 async function exportPipeline(){
   const pf=PF(),wb=new ExcelJS.Workbook();wb.creator=_t("Lean Navigator");
   const a=wb.addWorksheet(_t("Ideas"),{views:[{state:"frozen",ySplit:1}]});styleHead(a.addRow([_t("Idea"),_t("Problem or opportunity"),_t("Proposed by"),_t("Added"),_t("Benefit"),_t("Effort"),_t("Score"),_t("Strategic link"),_t("Status"),_t("Note"),_t("Project")]));
   pf.ideas.forEach(x=>a.addRow([x.title,x.problem,x.proposer,x.added?new Date(x.added):null,num(x.benefit),num(x.effort),ideaScore(x),priLabel(x.link),x.status,x.note,S.projects.find(p=>p.id===x.projectId)?.title||""]));
   [36,50,18,12,9,9,8,50,14,40,30].forEach((w,i)=>a.getColumn(i+1).width=w);a.getColumn(4).numFmt="yyyy-mm-dd";
-  const j=wb.addWorksheet(_t("Just do it"));styleHead(j.addRow([_t("What"),_t("Owner"),_t("Due"),_t("Done"),_t("Result"),_t("Strategic link")]));pf.jdi.forEach(x=>j.addRow([x.what,x.owner,x.due?new Date(x.due):null,x.done,x.result,priLabel(x.link)]));[50,18,12,8,50,50].forEach((w,i)=>j.getColumn(i+1).width=w);j.getColumn(3).numFmt="yyyy-mm-dd";
+  const j=wb.addWorksheet(_t("Just do it"));styleHead(j.addRow([_t("Just do it"),_t("Problem"),_t("What changes"),_t("Owner"),_t("Due"),_t("Done"),_t("What you measure"),_t("Before"),_t("After"),_t("Part of"),_t("Strategic link"),_t("Status")]));
+  jdiProjects().forEach(p=>{const x=p.jdo;j.addRow([p.title,x.problem,x.what,x.owner,x.due?new Date(x.due):null,x.done,x.measure,x.before,x.after,x.parent&&x.parent.title?`${x.parent.title} (${x.parent.tool})`:"",priLabel(p.hoshinLink),STATUSES[p.status]])});
+  [36,40,40,18,12,8,24,10,10,30,40,12].forEach((w,i)=>j.getColumn(i+1).width=w);j.getColumn(5).numFmt="yyyy-mm-dd";
   await saveBlob(`lean-navigator-pipeline-${today10()}.xlsx`,new Blob([await wb.xlsx.writeBuffer()],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));toast(_t("Pipeline exported."));
 }
 Object.assign(INFO,{
  "pf.ideas":I(_t("Keep every improvement idea in one place and choose the right ones, instead of starting whatever is loudest."),_t("A title, the problem it solves, benefit and effort from 1 to 5, and if possible the strategic priority it serves."),_t("Not reviewed by the AI. The score is benefit × (6 − effort), plus 3 when the idea is linked to a strategic priority. It supports the decision; it does not make it.")),
- "pf.jdi":I(_t("Small, obvious fixes: cause and solution known, low risk, quick. Record them so the improvement is visible."),_t("What, who, by when, done or not, and the result."),_t("Items that wait for weeks were not Just do its: move them back to the pipeline."))
+ "pf.jdi":I(_t("Small, obvious fixes: cause and solution known, low risk, quick. Each one is a Just do it project, so the fix and its evidence are recorded and visible."),_t("Open a Just do it to record the fix, the owner, the date, and one measure before and after."),_t("Items that wait for weeks were not Just do its: move them to PDCA or A3. Done without an after value is a task, not an improvement."))
 });

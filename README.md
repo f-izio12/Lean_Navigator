@@ -11,12 +11,13 @@ A local-first workspace for Lean and Six Sigma improvement projects. It runs in 
 - **DMADV** (Define, Measure, Analyse, Design, Verify) for new processes and services: Kano analysis, CTQs with limits, Pugh matrix, House of Quality, design FMEA, design scorecard and CTQ verification.
 - **PDCA** in fast cycles, each with a prediction, result, learning and an adopt, adapt or abandon decision.
 - **Digital 5S** for shared drives, mailboxes and team sites, with a 15-point audit, red-tag list, retention check and radar chart.
+- **Just do it** for small, obvious fixes: four entry questions (cause known, fix known, low risk, quick), one owner and date, one measure before and after, and where the fix is now standard. It works on its own, and DMAIC quick wins, value stream actions marked Just do it and open Kaizen items can be sent to it from the tollgate. If a fix fails the entry check, one click moves it to PDCA or A3.
 
 Every stage has a checkpoint (tollgate, mentor check or review), instant quality checks and an explanation of what to fill in. Every project also has a **Plan and Gantt** view (work packages, stories, sub-tasks, milestones and finish-to-start dependencies), **Stakeholders** (power and interest grid) and a **RACI**.
 
 Above the projects sit two portfolio pages:
 
-- **Pipeline**: collect improvement ideas, score them on benefit and effort, link them to a strategic priority, and decide: start as a project (with a method, or ask the advisor), move to the **Just do it** log, park or reject.
+- **Pipeline**: collect improvement ideas, score them on benefit and effort, link them to a strategic priority, and decide: start as a project (with a method, or ask the advisor), start it as a **Just do it**, park or reject.
 - **Strategy (Hoshin Kanri)**: plans at the levels you define, for example organisation, division and team. Breakthrough objectives, annual objectives, improvement priorities and metrics are linked level by level, shown as matrices, and tracked month by month against a straight-line plan. Projects and ideas link to priorities, so you see which priorities have no work behind them.
 
 **Catchball between levels** works with share files: the owner of a plan exports a share file, the level below imports it as its parent plan (read-only) and links its own objectives to it. Share files are not encrypted, because they are meant to be shared.

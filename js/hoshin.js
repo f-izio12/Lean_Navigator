@@ -17,7 +17,7 @@ function planGaps(plan){const f=[],c=(k,id)=>hcode(plan,k,id);
   plan.priorities.filter(p=>p.text.trim()&&!plan.metrics.some(m=>(m.links||[]).includes(p.id))).forEach(p=>f.push(`${_t("{id} has no metric: progress cannot be tracked.",{id:c("priorities",p.id)})}`));
   const np=plan.priorities.filter(p=>p.text.trim()).length;if(np>7)f.push(`${_t("{np} improvement priorities. Hoshin works by focus: most organisations manage three to five.",{np:np})}`);
   return f}
-function workFor(priId){return{projects:S.projects.filter(p=>p.hoshinLink===priId),ideas:PF().ideas.filter(x=>x.link===priId&&!["Started","Rejected"].includes(x.status)),jdi:PF().jdi.filter(j=>j.link===priId)}}
+function workFor(priId){return{projects:S.projects.filter(p=>p.hoshinLink===priId),ideas:PF().ideas.filter(x=>x.link===priId&&!["Started","Rejected","Just do it"].includes(x.status)),jdi:PF().jdi.filter(j=>j.link===priId)}}
 
 /* ----- page ----- */
 function renderStrategy(){
