@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Lean Navigator: a local-first workspace for Lean and Six Sigma projects (DMAIC, A3, Kaizen, value stream mapping).">
+<meta name="theme-color" content="#0C2145">
+<title>Lean Navigator</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preload" href="fonts/jost-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="bar">
+  <span class="mark" aria-hidden="true"></span>
+  <h1>Lean Navigator</h1>
+  <nav>
+    <button class="navbtn" id="navStrategy" hidden>Strategy</button>
+    <button class="navbtn" id="navPipeline" hidden>Pipeline</button>
+    <button class="navbtn" id="navHome" hidden>Projects</button>
+    <button class="navbtn" id="navSettings" hidden>Settings</button>
+    <button class="navbtn" id="navLock" hidden>Lock</button>
+    <select id="langSel" class="langsel" aria-label="Language"></select>
+  </nav>
+</header>
+<div id="banner" role="status" hidden></div>
+<main id="app"></main>
+<div class="toast" id="toast" role="status"></div>
+<div id="modalRoot"></div>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="vendor/exceljs.min.js"></script>
+<script src="js/i18n.js"></script>
+<script src="i18n/de.js"></script>
+<script src="i18n/fr.js"></script>
+<script src="i18n/it.js"></script>
+<script src="i18n/nl.js"></script>
+<script src="js/core.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dmaic.js"></script>
+<script src="js/hyp.js"></script>
+<script src="js/a3.js"></script>
+<script src="js/kaizen.js"></script>
+<script src="js/vsm.js"></script>
+<script src="js/dmadv.js"></script>
+<script src="js/pdca.js"></script>
+<script src="js/fives.js"></script>
+<script src="js/info.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/plan.js"></script>
+<script src="js/people.js"></script>
+<script src="js/export.js"></script>
+<script src="js/portfolio.js"></script>
+<script src="js/hoshin.js"></script>
+<script src="js/jdi.js"></script>
+<script src="js/vault.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/security.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
