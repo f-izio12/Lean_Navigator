@@ -10,7 +10,7 @@ if((()=>{try{return window.top!==window.self}catch{return true}})()){
   throw new Error(_t("Lean Navigator refused to run inside a frame."));
 }
 /* ================= App shell: vault screens, settings, storage, start-up ================= */
-const APP_VERSION="1.3.1";
+const APP_VERSION="1.3.2";
 let saveChain=Promise.resolve();
 function persistAll(){saveChain=saveChain.then(async()=>{Vault.state.projects=S.projects;await Vault.seal();if(Vault.fileHandle&&Vault.fileOk)Vault.dirty=false;updateBanner();updateSaveBar()});return saveChain}
 const _scheduleSave=scheduleSave;scheduleSave=function(p){Vault.dirty=true;_scheduleSave(p);updateSaveBar()};
@@ -23,28 +23,28 @@ const pwOK=p=>p.length>=10;
 function screen(html){nav(false);$("#banner").hidden=true;$("#app").innerHTML=`<div class="gate panel"><div class="panel-body">${html}</div></div>`;$("#app").querySelector("input")?.focus()}
 function showWelcome(){S.screenFn=showWelcome;
   screen(`<h2>${_t("Welcome to Lean Navigator")}</h2>
-   <p class="muted">${_t("Your projects are stored in this browser, encrypted with a passphrase only you know. Nothing is sent anywhere unless you connect an AI provider.")}</p>
+   <p class="muted">${_t("Your projects are stored in this browser, encrypted with a password only you know. Nothing is sent anywhere unless you connect an AI provider.")}</p>
    <div class="grid2 paths">
    <div class="path"><h3>${_t("I have a saved file")}</h3><p class="small">${_t("Use this if you worked with Lean Navigator before and the browser no longer shows your projects, or you are on another computer.")}</p>
      <div class="row"><label class="btn hot" for="restoreIn">${_t("Open my saved file")}</label><input id="restoreIn" type="file" accept=".json,application/json" hidden>${Vault.fileSupported()?`<button class="btn alt" id="openLinked">${_t("Open and keep it in sync")}</button>`:""}</div></div>
    <div class="path"><h3>${_t("I am new")}</h3>
-     <div class="field"><label for="p1">${_t("Choose a passphrase")}</label><div class="hint">${_t("At least 10 characters. A short sentence is easier to remember and harder to guess.")}</div><input id="p1" type="password" autocomplete="new-password"></div>
-     <div class="field"><label for="p2">${_t("Repeat the passphrase")}</label><input id="p2" type="password" autocomplete="new-password"></div>
+     <div class="field"><label for="p1">${_t("Choose a password")}</label><div class="hint">${_t("At least 10 characters. A short sentence is easier to remember and harder to guess.")}</div><input id="p1" type="password" autocomplete="new-password"></div>
+     <div class="field"><label for="p2">${_t("Repeat the password")}</label><input id="p2" type="password" autocomplete="new-password"></div>
      <div class="flags" id="err"></div><button class="btn" id="create">${_t("Create my vault")}</button></div>
    </div>`);
   $("#create").onclick=async()=>{const a=$("#p1").value,b=$("#p2").value;
-    if(!pwOK(a))return $("#err").innerHTML=flagsHTML([_t("The passphrase needs at least 10 characters.")]);
-    if(a!==b)return $("#err").innerHTML=flagsHTML([_t("The two passphrases are different.")]);
+    if(!pwOK(a))return $("#err").innerHTML=flagsHTML([_t("The password needs at least 10 characters.")]);
+    if(a!==b)return $("#err").innerHTML=flagsHTML([_t("The two passwords are different.")]);
     $("#create").disabled=true;$("#create").textContent=_t("Creating…");const code=await Vault.create(a);showCode(code,true)};
   bindRestore();
 }
 function bindRestore(){
-  const o=$("#openLinked");if(o)o.onclick=async()=>{try{await Vault.openFile();showUnlock(_t("Vault file linked. Enter the passphrase of that vault."))}catch(e){if(e.name!=="AbortError")toast(e.message)}};
-  const r=$("#restoreIn");if(r)r.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const rec=JSON.parse(await f.text());if(Vault.rec&&!confirm(_t("Replace the vault in this browser (and in the synced file, if you use one) with the one in this file? Anything not in the file is lost.")))return;await Vault.replace(rec);showUnlock(_t("Backup restored. Enter the passphrase of that vault."))}catch(err){toast(err.message||_t("Could not read the file."))}};
+  const o=$("#openLinked");if(o)o.onclick=async()=>{try{await Vault.openFile();showUnlock(_t("Vault file linked. Enter the password of that vault."))}catch(e){if(e.name!=="AbortError")toast(e.message)}};
+  const r=$("#restoreIn");if(r)r.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const rec=JSON.parse(await f.text());if(Vault.rec&&!confirm(_t("Replace the vault in this browser (and in the synced file, if you use one) with the one in this file? Anything not in the file is lost.")))return;await Vault.replace(rec);showUnlock(_t("Backup restored. Enter the password of that vault."))}catch(err){toast(err.message||_t("Could not read the file."))}};
 }
 function showCode(code,first){S.screenFn=()=>showCode(code,first);
   screen(`<h2>${_t("Your recovery code")}</h2>
-   <p>${_t("If you forget your passphrase, this code is the only way back into your data. There is no server and no password reset by email.")}</p>
+   <p>${_t("If you forget your password, this code is the only way back into your data. There is no server and no password reset by email.")}</p>
    <div class="code" id="code">${esc(code)}</div>
    <div class="row"><button class="btn alt" id="copy">${_t("Copy")}</button></div>
    <p class="small muted">${_t("Store it in a password manager or print it. It is shown only now.")}</p>
@@ -66,31 +66,31 @@ function showOnboarding(){S.screenFn=showOnboarding;
   $("#done").onclick=enterApp;
 }
 function showUnlock(msg){S.screenFn=()=>showUnlock(msg);
-  screen(`<h2>${_t("Unlock Lean Navigator")}</h2>${msg?`<div class="flag info">${esc(msg)}</div>`:""}
+  screen(`<h2>${_t("Log in to Lean Navigator")}</h2>${msg?`<div class="flag info">${esc(msg)}</div>`:""}
    ${Vault.fileHandle?`<p class="small muted">${_t("Synced file: {fileHandleName}. The browser may ask permission to use it.",{fileHandleName:esc(Vault.fileHandle.name)})}</p>`:""}
-   <div class="field"><label for="pw">${_t("Passphrase")}</label><input id="pw" type="password" autocomplete="current-password"></div>
-   <div class="flags" id="err"></div><button class="btn hot" id="unlock">${_t("Unlock")}</button>
-   <details class="more"><summary>${_t("Forgot your passphrase?")}</summary>
+   <div class="field"><label for="pw">${_t("Password")}</label><input id="pw" type="password" autocomplete="current-password"></div>
+   <div class="flags" id="err"></div><button class="btn hot" id="unlock">${_t("Log in")}</button>
+   <details class="more"><summary>${_t("Forgot your password?")}</summary>
      <div class="field"><label for="rc">${_t("Recovery code")}</label><input id="rc" autocomplete="off" placeholder="${_t("XXXXX-XXXXX-XXXXX-XXXXX-XXXXX")}"></div>
-     <div class="field"><label for="n1">${_t("New passphrase")}</label><input id="n1" type="password" autocomplete="new-password"></div>
-     <div class="field"><label for="n2">${_t("Repeat new passphrase")}</label><input id="n2" type="password" autocomplete="new-password"></div>
-     <div class="flags" id="err2"></div><button class="btn" id="recover">${_t("Recover and set new passphrase")}</button></details>
+     <div class="field"><label for="n1">${_t("New password")}</label><input id="n1" type="password" autocomplete="new-password"></div>
+     <div class="field"><label for="n2">${_t("Repeat new password")}</label><input id="n2" type="password" autocomplete="new-password"></div>
+     <div class="flags" id="err2"></div><button class="btn" id="recover">${_t("Recover and set new password")}</button></details>
    <details class="more"><summary>${_t("Other options")}</summary>
      <div class="row">${Vault.fileSupported()?`<button class="btn alt" id="openLinked">${_t("Use a different vault file")}</button>`:""}<label class="btn alt" for="restoreIn">${_t("Restore from a backup file")}</label><input id="restoreIn" type="file" accept=".json,application/json" hidden>
      <button class="btn alt" id="wipe">${_t("Delete this vault and start over")}</button></div></details>`);
   $("#pw").onkeydown=e=>{if(e.key==="Enter")$("#unlock").click()};
   $("#unlock").onclick=()=>doUnlock($("#pw").value,false,$("#err"),$("#unlock"));
   $("#recover").onclick=async()=>{const a=$("#n1").value,b=$("#n2").value;
-    if(!pwOK(a))return $("#err2").innerHTML=flagsHTML([_t("The new passphrase needs at least 10 characters.")]);
-    if(a!==b)return $("#err2").innerHTML=flagsHTML([_t("The two passphrases are different.")]);
-    if(await doUnlock($("#rc").value,true,$("#err2"),$("#recover"))){await Vault.setPass(a);toast(_t("New passphrase set. Your recovery code still works."))}};
+    if(!pwOK(a))return $("#err2").innerHTML=flagsHTML([_t("The new password needs at least 10 characters.")]);
+    if(a!==b)return $("#err2").innerHTML=flagsHTML([_t("The two passwords are different.")]);
+    if(await doUnlock($("#rc").value,true,$("#err2"),$("#recover"))){await Vault.setPass(a);toast(_t("New password set. Your recovery code still works."))}};
   $("#wipe").onclick=async()=>{if(prompt(_t("This permanently deletes all projects in this browser. Type DELETE to confirm."))!=="DELETE")return;await Vault.destroy();showWelcome()};
   bindRestore();
 }
 async function doUnlock(secret,byCode,errEl,btn){
   if(!secret)return false;
   const hasFile=!!Vault.fileHandle,granted=hasFile?await Vault.filePermission(true):false; // ask while the click still counts as a user action
-  btn.disabled=true;const label=btn.textContent;btn.textContent=_t("Unlocking…");
+  btn.disabled=true;const label=btn.textContent;btn.textContent=_t("Logging in…");
   try{
     /* Open the browser copy and the synced file, then keep the one with the higher encrypted revision. */
     let rec=Vault.rec,opened=null,fromFile=false,fileOK=granted,fileErr=null;
@@ -99,18 +99,18 @@ async function doUnlock(secret,byCode,errEl,btn){
     if(granted&&!restoring){const f=await Vault.readFile();
       if(f&&JSON.stringify(f.data)!==JSON.stringify(rec&&rec.data)){
         let fo=null;try{fo=await Vault.decrypt(f,secret,byCode)}catch{}
-        if(!fo){if(!opened)throw fileErr||new Error(byCode?_t("This recovery code does not open the vault."):_t("Wrong passphrase."));fileOK=false;Vault.fileBlocked=true;Vault.fileStatus=_t("File not connected: it does not open with this passphrase, so it was left unchanged")}
+        if(!fo){if(!opened)throw fileErr||new Error(byCode?_t("This recovery code does not open the vault."):_t("Wrong password."));fileOK=false;Vault.fileBlocked=true;Vault.fileStatus=_t("File not connected: it does not open with this password, so it was left unchanged")}
         else if(!opened)  {rec=f;opened=fo;fromFile=true}
         else{const rf=Vault.rev(fo.state),rl=Vault.rev(opened.state);
           if(rf>rl||(rf===rl&&rf===0&&String(f.savedAt)>String(rec.savedAt))){rec=f;opened=fo;fromFile=true}}
-      }else if(!f&&!opened)throw fileErr||new Error(_t("Could not unlock."));
+      }else if(!f&&!opened)throw fileErr||new Error(_t("Could not log in."));
     }
-    if(!opened)throw new Error(_t("Could not unlock."));
+    if(!opened)throw new Error(_t("Could not log in."));
     await Vault.open(rec,secret,byCode,opened);
     if(fromFile)await IDB.set("vault",rec);else if(fileOK)await Vault.writeFile();
     if(hasFile&&!granted)Vault.fileStatus=_t("File not connected: permission not granted");
     enterApp();return true;
-  }catch(e){errEl.innerHTML=flagsHTML([e.message||_t("Could not unlock.")]);btn.disabled=false;btn.textContent=label;return false}
+  }catch(e){errEl.innerHTML=flagsHTML([e.message||_t("Could not log in.")]);btn.disabled=false;btn.textContent=label;return false}
 }
 async function enterApp(){
   sanitizeState(Vault.state);
@@ -136,7 +136,7 @@ const _render=render;render=function(){S.screenFn=null;_render();updateBanner();
 async function downloadBackup(){
   await persistAll();
   await downloads.save({filename:`lean-navigator-backup-${new Date().toISOString().slice(0,10)}.json`,data:new Blob([Vault.json()],{type:"application/json"})});
-  Vault.state.settings.lastBackup=new Date().toISOString();await persistAll();Vault.dirty=false;updateSaveBar();toast(_t("Backup downloaded to your Downloads folder. It is encrypted with your passphrase."));
+  Vault.state.settings.lastBackup=new Date().toISOString();await persistAll();Vault.dirty=false;updateSaveBar();toast(_t("Backup downloaded to your Downloads folder. It is encrypted with your password."));
 }
 
 /* ----- save to file, save bar and close guard ----- */
@@ -159,7 +159,7 @@ function updateSaveBar(){
   el.innerHTML=`<div class="sb-state small">${state}</div><div class="row"><button class="btn ${Vault.dirty||!last&&!synced?"hot":"alt"} small" id="sbSave">${_t("Save to file")}</button><label class="btn alt small" for="sbOpen">${_t("Open a saved file")}</label><input id="sbOpen" type="file" accept=".json,application/json" hidden></div>`;
   $("#sbSave").onclick=saveToFile;
   $("#sbOpen").onchange=async e=>{const f=e.target.files[0];if(!f)return;if(!confirm(_t("Open this file instead of the projects in this browser (and in the synced file, if you use one)? Projects that are not in the file are lost.")))return;
-    try{const rec=JSON.parse(await f.text());await Vault.replace(rec);S.projects=[];sample=null;showUnlock(_t("File loaded. Enter the passphrase of that file."))}catch(err){toast(err.message||_t("Could not read the file."))}};
+    try{const rec=JSON.parse(await f.text());await Vault.replace(rec);S.projects=[];sample=null;showUnlock(_t("File loaded. Enter the password of that file."))}catch(err){toast(err.message||_t("Could not read the file."))}};
 }
 let closeOK=false;
 function showSaveModal(){
@@ -220,12 +220,12 @@ async function openSettings(){S.screenFn=openSettings;
        <div class="row"><button class="btn alt" id="fLink">${Vault.fileHandle?_t("Change file"):_t("Choose a file to keep in sync")}</button>${Vault.fileHandle?`<button class="btn alt" id="fUnlink">${_t("Stop syncing")}</button>`:""}</div>`
        :`<p class="small">${_t("This browser cannot keep a file in sync automatically. Use Chrome or Edge on a computer for that, or download backups here.")}</p>`}
      <div class="row" style="margin-top:12px"><button class="btn alt" id="bDown">${_t("Download backup")}</button><label class="btn alt" for="restoreIn">${_t("Restore from a backup file")}</label><input id="restoreIn" type="file" accept=".json,application/json" hidden></div>
-     <p class="small muted">${_t("Last backup: {x}. Backups and synced files are encrypted: they open only with your passphrase or recovery code.",{x:Vault.state.settings.lastBackup?fmtDate(Vault.state.settings.lastBackup):_t("never")})}</p>
+     <p class="small muted">${_t("Last backup: {x}. Backups and synced files are encrypted: they open only with your password or recovery code.",{x:Vault.state.settings.lastBackup?fmtDate(Vault.state.settings.lastBackup):_t("never")})}</p>
    </div></section>
    <section class="panel"><div class="panel-head"><h3>${_t("Security")}</h3></div><div class="panel-body">
-     <div class="grid2"><div class="field"><label for="c1">${_t("New passphrase")}</label><input id="c1" type="password" autocomplete="new-password"></div><div class="field"><label for="c2">${_t("Repeat new passphrase")}</label><input id="c2" type="password" autocomplete="new-password"></div></div>
+     <div class="grid2"><div class="field"><label for="c1">${_t("New password")}</label><input id="c1" type="password" autocomplete="new-password"></div><div class="field"><label for="c2">${_t("Repeat new password")}</label><input id="c2" type="password" autocomplete="new-password"></div></div>
      <div class="flags" id="cErr"></div>
-     <div class="row"><button class="btn alt" id="cSave">${_t("Change passphrase")}</button><button class="btn alt" id="newCode">${_t("Create a new recovery code")}</button><button class="btn alt" id="lock2">${_t("Lock now")}</button></div>
+     <div class="row"><button class="btn alt" id="cSave">${_t("Change password")}</button><button class="btn alt" id="newCode">${_t("Create a new recovery code")}</button><button class="btn alt" id="lock2">${_t("Log out")}</button></div>
    </div></section>
    <p class="small muted">${_t("Lean Navigator {APP_VERSION}. Open source under the MIT licence.",{APP_VERSION:APP_VERSION})}</p></div>`;
   const setHint=()=>{const p=PRESETS.find(x=>x.id===$("#aiP").value);$("#aiKh").innerHTML=p.noKey?_t("Not needed for a local model."):p.keyUrl?`${_t("Get a key at")} <a href="${p.keyUrl}" target="_blank" rel="noopener">${esc(p.keyUrl.replace(/^https:\/\//,""))}</a>.`:""};
@@ -261,8 +261,8 @@ async function openSettings(){S.screenFn=openSettings;
   const fu=$("#fUnlink");if(fu)fu.onclick=async()=>{await Vault.unlinkFile();openSettings()};
   $("#bDown").onclick=async()=>{await downloadBackup();openSettings()};
   $("#restoreIn").onchange=async e=>{const f=e.target.files[0];if(!f)return;if(!confirm(_t("Replace everything in this browser, and in the synced file if you use one, with the backup? Projects not in the backup are lost.")))return;
-    try{const rec=JSON.parse(await f.text());await Vault.replace(rec);S.projects=[];sample=null;showUnlock(_t("Backup restored. Enter the passphrase of that backup."))}catch(err){toast(err.message||_t("Could not read the file."))}};
-  $("#cSave").onclick=async()=>{const a=$("#c1").value,b=$("#c2").value;if(!pwOK(a))return $("#cErr").innerHTML=flagsHTML([_t("At least 10 characters.")]);if(a!==b)return $("#cErr").innerHTML=flagsHTML([_t("The two passphrases are different.")]);await Vault.setPass(a);$("#c1").value=$("#c2").value="";$("#cErr").innerHTML=flagsHTML([_t("✓ Passphrase changed.")])};
+    try{const rec=JSON.parse(await f.text());await Vault.replace(rec);S.projects=[];sample=null;showUnlock(_t("Backup restored. Enter the password of that backup."))}catch(err){toast(err.message||_t("Could not read the file."))}};
+  $("#cSave").onclick=async()=>{const a=$("#c1").value,b=$("#c2").value;if(!pwOK(a))return $("#cErr").innerHTML=flagsHTML([_t("At least 10 characters.")]);if(a!==b)return $("#cErr").innerHTML=flagsHTML([_t("The two passwords are different.")]);await Vault.setPass(a);$("#c1").value=$("#c2").value="";$("#cErr").innerHTML=flagsHTML([_t("✓ Password changed.")])};
   $("#newCode").onclick=async()=>{if(!confirm(_t("The old recovery code will stop working. Continue?")))return;showCode(await Vault.newCode(),false)};
   $("#lock2").onclick=lockNow;$("#back").onclick=()=>{S.view="home";render()};
 }
@@ -281,7 +281,7 @@ window.addEventListener("pagehide",()=>{if(Vault.state)persistAll()});
 })();
 
 /* ----- language menu ----- */
-function navLabels(){[["#navHome","Projects"],["#navPipeline","Pipeline"],["#navStrategy","Strategy"],["#navSettings","Settings"],["#navLock","Lock"]].forEach(([s,l])=>{const e=$(s);if(e)e.textContent=_t(l)});const ls=$("#langSel");if(ls)ls.setAttribute("aria-label",_t("Language"))}
+function navLabels(){[["#navHome","Projects"],["#navPipeline","Pipeline"],["#navStrategy","Strategy"],["#navSettings","Settings"],["#navLock","Log out"]].forEach(([s,l])=>{const e=$(s);if(e)e.textContent=_t(l)});const ls=$("#langSel");if(ls)ls.setAttribute("aria-label",_t("Language"))}
 (function langMenu(){const sel=$("#langSel");if(!sel)return;
   sel.innerHTML=LANGS.map(([k,l])=>`<option value="${k}" ${k===I18N.lang?"selected":""}>${esc(l)}</option>`).join("");
   sel.onchange=async()=>{sel.disabled=true;try{await setLanguage(sel.value)}catch(e){toast(e.message)}finally{sel.disabled=false}};

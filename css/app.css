@@ -299,6 +299,12 @@ table.jdq select{width:100%}
 #jdEsc p{margin:10px 0 8px}
 #jdEsc .btn{margin-bottom:18px}
 .grid3.jd-ev{align-items:end}
+/* black belt review chat */
+.bb-chat{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.bb-chat h4{margin:0 0 8px}
+.bb-msgs{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;margin-bottom:10px}
+.bb-msgs .msg{max-width:94%;font-size:.88rem}
+.bb-chat textarea{width:100%;box-sizing:border-box;margin-bottom:8px}
 
 .langsel{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);padding:5px 8px;font:inherit;cursor:pointer}
 .langsel option{color:#0C2145;background:#fff}

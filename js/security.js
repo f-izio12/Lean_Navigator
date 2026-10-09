@@ -16,7 +16,7 @@ function cleanPlanImport(p){
     metrics:items(p.metrics,x=>{const m={};if(x.months&&typeof x.months==="object")for(let i=0;i<12;i++){const v=cleanStr(x.months[i],40);if(v)m[i]=v}
       return{baseline:cleanStr(x.baseline,40),target:cleanStr(x.target,40),direction:x.direction==="Lower is better"?"Lower is better":"Higher is better",months:m}})};
 }
-/* Restored or synced vaults are decrypted with the user's passphrase, but may still have been
+/* Restored or synced vaults are decrypted with the user's password, but may still have been
    produced by someone else. Replace unsafe identifiers and invalid enumeration values. */
 function sanitizeState(st){
   const walk=o=>{if(Array.isArray(o)){o.forEach(walk);return}if(!o||typeof o!=="object")return;

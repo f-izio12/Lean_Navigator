@@ -1,7 +1,7 @@
 /* ================= Encrypted vault =================
    All data (projects and settings, including any AI key) is encrypted in the browser
    with AES-GCM 256. A random data key is wrapped twice: once with a key derived from
-   the passphrase, once with a key derived from the recovery code (PBKDF2-SHA256).
+   the password, once with a key derived from the recovery code (PBKDF2-SHA256).
    Nothing leaves the device unless you link a file or download a backup, and those
    contain the same encrypted vault. */
 const IDB={
@@ -46,7 +46,7 @@ const Vault={
   /* Decrypts a vault record without making it the active one. Returns {dk,state} or throws. */
   async decrypt(rec,secret,byCode){
     const w=byCode?rec.rec:rec.pass;
-    let dk;try{dk=await unwrap(w,byCode?normCode(secret):secret,rec.kdf.iter)}catch{throw new Error(byCode?_t("This recovery code does not open the vault."):_t("Wrong passphrase."))}
+    let dk;try{dk=await unwrap(w,byCode?normCode(secret):secret,rec.kdf.iter)}catch{throw new Error(byCode?_t("This recovery code does not open the vault."):_t("Wrong password."))}
     const data=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(rec.data.iv)},await aesKey(dk),unb64(rec.data.ct));
     const state=JSON.parse(TD.decode(data));
     if(!state||typeof state!=="object"||Array.isArray(state))throw new Error(_t("The vault content is not valid."));
@@ -63,7 +63,7 @@ const Vault={
      savedAt (outside the encryption) is only used for vaults saved before version 1.2.3. */
   rev:st=>Number.isSafeInteger(st&&st.rev)&&st.rev>=0?st.rev:0,
   async seal(){
-    if(!this.dk)throw new Error(_t("Vault is locked."));
+    if(!this.dk)throw new Error(_t("You are logged out."));
     this.state.rev=this.rev(this.state)+1;
     const iv=rnd(12),ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},await aesKey(this.dk),TE.encode(JSON.stringify(this.state)));
     this.rec={...this.rec,savedAt:new Date().toISOString(),data:{iv:b64(iv),ct:b64(ct)}};
@@ -96,7 +96,7 @@ const Vault={
   },
   async readFile(){try{const rec=JSON.parse(await (await this.fileHandle.getFile()).text());return validVault(rec)?rec:null}catch{return null}},
   async writeFile(){
-    if(!this.fileHandle||!this.rec||this.fileBlocked)return; // a file that did not open with this passphrase is never overwritten
+    if(!this.fileHandle||!this.rec||this.fileBlocked)return; // a file that did not open with this password is never overwritten
     try{if(!(await this.filePermission(false))){this.fileOk=false;this.fileStatus=_t("File not updated: permission needed");return}
       const w=await this.fileHandle.createWritable();await w.write(this.json());await w.close();this.fileOk=true;this.fileTime=new Date().toLocaleTimeString(uiLocale(),{hour:"2-digit",minute:"2-digit"});this.fileStatus=_t("File saved {time}",{time:this.fileTime})}
     catch(e){this.fileOk=false;this.fileStatus=(_t("File not updated: {x}",{x:e.message||"error"}))}

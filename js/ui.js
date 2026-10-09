@@ -240,18 +240,26 @@ function stageData(p,id){
 }
 const CONTEXT={};
 function renderCoach(){
-  const el=$("#coach");if(!el)return;const id=S.stage,c=S.coach[S.current.id+id];
+  const el=$("#coach");if(!el)return;const id=S.stage,c=coachOf(S.current,id);
   if(!sample){el.innerHTML=`<p class="muted small">${_t("No AI provider is connected. Open Settings to connect one. The instant checks in each tab still work.")}</p>`;return}
   el.innerHTML=`<p class="small muted" style="margin-top:0">${_t("A strict review of your {x} work before the {x2}. It will not be polite about weak points.",{x:ST[id].name,x2:DEF[S.current.tool].gate})}</p>
     <button class="btn hot" id="review" ${S.coachBusy?"disabled":""}>${S.coachBusy?_t("Reviewing…"):(_t("Review {x}",{x:ST[id].name}))}</button>
-    ${c?`<div style="margin-top:16px"><div class="verdict">${c.verdict==="ready"?_t("Ready to pass"):_t("Rework before passing")}</div>${c.summary?`<p class="small">${esc(c.summary)}</p>`:""}
+    ${c?`<div style="margin-top:16px">${c.at?`<p class="small muted">${_t("Reviewed {at}. Edits made since then are not in this review.",{at:fmtDate(c.at)})}</p>`:""}<div class="verdict">${c.verdict==="ready"?_t("Ready to pass"):_t("Rework before passing")}</div>${c.summary?`<p class="small">${esc(c.summary)}</p>`:""}
     ${c.issues.map(i=>`<div class="issue ${esc(i.severity)}"><b>${esc(i.field)}</b>${esc(i.issue)}<div class="small muted">${esc(i.suggestion)}</div></div>`).join("")}</div>`:""}
-    ${c&&c.verdict==="ready"&&jdiCandidates(S.current).length?`<div class="jdi-hint"><p class="small">${_t("<b>This project would benefit from Just do it.</b> Some items are quick, low-risk fixes with a known cause.")}</p><button class="btn alt" id="goJdi">${_t("Go to Just do it")}</button></div>`:""}`;
+    ${c&&c.verdict==="ready"&&jdiCandidates(S.current).length?`<div class="jdi-hint"><p class="small">${_t("<b>This project would benefit from Just do it.</b> Some items are quick, low-risk fixes with a known cause.")}</p><button class="btn alt" id="goJdi">${_t("Go to Just do it")}</button></div>`:""}
+    ${c?`<div class="bb-chat"><h4>${_t("Ask about this review")}</h4>
+      <div class="bb-msgs" id="bbMsgs">${(c.chat||[]).map(m=>`<div class="msg ${m.role==="user"?"user":"bot"}">${esc(m.content)}</div>`).join("")}${S.bbBusy?`<div class="msg bot thinking">${_t("Thinking…")}</div>`:""}</div>
+      <textarea id="bbQ" rows="3" placeholder="${_t("Ask why, ask for an example, or argue a point")}" aria-label="${_t("Your question about the review")}" ${S.bbBusy?"disabled":""}></textarea>
+      <div class="row"><button class="btn" id="bbSend" ${S.bbBusy?"disabled":""}>${_t("Ask")}</button>${(c.chat||[]).length?`<button class="btn link" id="bbClear">${_t("Clear the conversation")}</button>`:""}</div>
+      <p class="small muted">${_t("Each question sends this stage and the review to your AI provider again.")}</p></div>`:""}`;
   $("#review").onclick=review;
+  const q=$("#bbQ");if(q){q.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();bbAsk()}};$("#bbSend").onclick=bbAsk;
+    const cl=$("#bbClear");if(cl)cl.onclick=()=>{c.chat=[];scheduleSave(S.current);renderCoach()};
+    const m=$("#bbMsgs");if(m)m.scrollTop=m.scrollHeight}
   const gj=$("#goJdi");if(gj)gj.onclick=()=>{S.tab="tollgate";renderProject();setTimeout(()=>{const x=$("#jdiPanel");if(x)x.scrollIntoView({behavior:"smooth",block:"start"})},60)};
 }
 async function review(){
-  const p=S.current,id=S.stage,short=p.tool==="Just do it";S.coachBusy=true;renderCoach();
+  const p=S.current,id=S.stage,short=p.tool==="Just do it";coachOf(p,id);S.coachBusy=true;renderCoach();
   const prompt=aiLangRule()+"\n\n"+`You are a Lean Six Sigma Master Black Belt with 30 years of experience reviewing the "${ST[id].name}" stage of a ${p.tool} project before its ${DEF[p.tool].gate.toLowerCase()}. Be strict, specific and constructive. No flattery. Point at concrete content. Check: ${ST[id].focus} Empty sections are issues. Use British English, or Italian if the content is in Italian.
 
 Project data (JSON):
@@ -260,7 +268,35 @@ ${JSON.stringify(stageData(p,id))}
 Respond with ONLY JSON:
 {"verdict":"ready" or "rework","summary":"max ${short?25:40} words","issues":[{"field":"which part","severity":"high|medium|low","issue":"max 30 words","suggestion":"max 30 words"}]}
 At most ${short?3:8} issues, most severe first.${short?" This is a small fix: keep the review short and raise only what really matters.":""}`;
-  try{const r=await sample.json(prompt);S.coach[p.id+id]={verdict:r.verdict==="ready"?"ready":"rework",summary:r.summary||"",issues:Array.isArray(r.issues)?r.issues.slice(0,short?3:8):[]}}
+  try{const r=await sample.json(prompt);
+    p.coach[id]={verdict:r.verdict==="ready"?"ready":"rework",summary:String(r.summary||""),at:new Date().toISOString(),chat:[],
+      issues:(Array.isArray(r.issues)?r.issues:[]).slice(0,short?3:8).map(i=>({field:String(i&&i.field||""),severity:["high","medium","low"].includes(i&&i.severity)?i.severity:"medium",issue:String(i&&i.issue||""),suggestion:String(i&&i.suggestion||"")}))};
+    scheduleSave(p)}
   catch(e){toast((_t("The review failed: {x}",{x:e&&e.message?e.message:_t("unknown error")})))}
   finally{S.coachBusy=false;if(S.stage===id)renderCoach()}
+}
+/* The review is kept with the project, per stage, so it survives a reload; the chat continues from it. */
+const coachOf=(p,id)=>{p.coach=p.coach&&typeof p.coach==="object"?p.coach:{};const c=p.coach[id];return c&&Array.isArray(c.issues)?c:null};
+const trimChat=c=>{while(c.chat.length&&(c.chat.length>40||c.chat[0].role!=="user"))c.chat.shift()};
+async function bbAsk(){
+  const p=S.current,id=S.stage,c=coachOf(p,id),q=$("#bbQ"),text=q?q.value.trim():"";
+  if(!c||!text||S.bbBusy||!sample)return;
+  c.chat=(c.chat||[]).concat({role:"user",content:text.slice(0,2000)});trimChat(c);S.bbBusy=true;renderCoach();
+  const ctx=(typeof aiLangRule==="function"?aiLangRule()+"\n\n":"")+`You are a Lean Six Sigma Master Black Belt with 30 years of experience. You have just reviewed the "${ST[id].name}" stage of a ${p.tool} project before its ${DEF[p.tool].gate.toLowerCase()}. The project lead now wants to discuss your review.
+Answer their questions about it: explain your reasoning, point at the concrete content you mean, and give a short example of what good looks like when that helps. Coach, do not do the work for them: never rewrite whole sections. If they disagree, weigh the argument honestly: if they are right, say so plainly and say which point you withdraw or change; if not, hold your position and explain why. If the project data has changed since the review, judge the current data. Stay on this project and on Lean and Six Sigma. No flattery. Plain text, no markdown, at most 150 words unless they ask for more. Use British English, or Italian if the user writes in Italian.
+
+Your review (JSON):
+${JSON.stringify({verdict:c.verdict,summary:c.summary,issues:c.issues})}
+
+Project data now (JSON):
+${JSON.stringify(stageData(p,id))}
+
+Respond with ONLY JSON: {"reply":"your answer"}
+
+First question:`;
+  const turns=c.chat.map((m,i)=>m.role==="user"?{role:"user",content:i===0?ctx+"\n"+m.content:m.content}:{role:"assistant",content:JSON.stringify({reply:m.content})});
+  try{const out=await sample.json(turns);const reply=String(out&&out.reply||"").trim();if(!reply)throw new Error(_t("empty answer"));
+    c.chat.push({role:"assistant",content:reply.slice(0,4000)});trimChat(c);scheduleSave(p)}
+  catch(e){c.chat.pop();toast((_t("The black belt could not answer: {x}",{x:e&&e.message?e.message:_t("unknown error")})));S.bbRestore=text}
+  finally{S.bbBusy=false;if(S.current===p&&S.stage===id){renderCoach();if(S.bbRestore){$("#bbQ").value=S.bbRestore;S.bbRestore=null}}}
 }
