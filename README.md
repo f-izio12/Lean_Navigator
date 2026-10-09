@@ -28,12 +28,12 @@ Above the projects sit two portfolio pages:
 
 ## Privacy in one paragraph
 
-There is no server and no account. Projects and settings, including any AI key, are encrypted in the browser with AES-GCM using a key protected by your passphrase. Nothing leaves your device unless you (a) connect an AI provider, in which case the text of your request goes directly to that provider, or (b) save a backup or synced file, which contains the same encrypted data.
+There is no server and no account. Projects and settings, including any AI key, are encrypted in the browser with AES-GCM using a key protected by your password. Nothing leaves your device unless you (a) connect an AI provider, in which case the text of your request goes directly to that provider, or (b) save a backup or synced file, which contains the same encrypted data.
 
 ## Using it
 
 1. Open the app (your GitHub Pages address, see below).
-2. Choose a passphrase. The app shows a **recovery code** once: store it in a password manager or print it. If you forget your passphrase, the recovery code is the only way back in. There is no password reset by email, because there is no server.
+2. Choose a password. The app shows a **recovery code** once: store it in a password manager or print it. If you forget your password, the recovery code is the only way back in. There is no password reset by email, because there is no server.
 3. Optionally choose a **file to keep in sync** (Chrome and Edge on a computer). Pick a location on your laptop or in a synced folder such as OneDrive, Google Drive or Dropbox. The app writes to it after every change and reads the newest copy when it starts, so you can use it on more than one computer.
 4. Optionally connect an **AI provider** in Settings.
 
@@ -55,7 +55,7 @@ Browsers can delete website data: when disk space runs low, when someone clears 
 | Chrome, Edge (computer) | Yes | Yes |
 | Firefox, Safari, mobile browsers | No | Yes, with a reminder after 7 days |
 
-Backups and synced files are encrypted. To move to a new computer, open the app there and choose "Open and keep syncing a vault file" or "Restore from a backup file", then enter your passphrase.
+Backups and synced files are encrypted. To move to a new computer, open the app there and choose "Open and keep syncing a vault file" or "Restore from a backup file", then enter your password.
 
 ## AI providers
 
@@ -141,7 +141,7 @@ The palette is blue #0C2145, gold #C3B598 and cream #FFFCF0, with the Jost typef
 
 - Statistics cover the common tests. Non-parametric and exact tests are not included.
 - The value stream map is drawn from a table, not by dragging boxes. Information flows are described in text.
-- Losing both the passphrase and the recovery code means the data cannot be recovered by anyone.
+- Losing both the password and the recovery code means the data cannot be recovered by anyone.
 
 ## Licence and disclaimer
 
